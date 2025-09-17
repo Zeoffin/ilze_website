@@ -1,0 +1,373 @@
+/* ===================================
+   PERFORMANCE & ACCESSIBILITY OPTIMIZATIONS
+   =================================== */
+
+/* Critical CSS - Above the fold content */
+.header,
+.hero,
+.nav-container,
+.hero-container {
+  contain: layout style paint;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--color-primary-orange, #FF6B35);
+  color: white;
+  padding: 8px 12px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 10000;
+  font-weight: bold;
+  font-size: 14px;
+  transition: top 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.skip-link:focus {
+  top: 6px;
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Optimize font loading with font-display: swap */
+@font-face {
+  font-family: 'Nunito';
+  font-display: swap;
+  src: local('Nunito'), local('Nunito-Regular');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-display: swap;
+  src: local('Open Sans'), local('OpenSans-Regular');
+}
+
+@font-face {
+  font-family: 'Comfortaa';
+  font-display: swap;
+  src: local('Comfortaa'), local('Comfortaa-Regular');
+}
+
+/* Enhanced lazy loading animation */
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Optimize animations for better performance */
+@keyframes optimizedFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    will-change: transform;
+  }
+  50% { 
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes optimizedWiggle {
+  0%, 100% { 
+    transform: rotate(0deg) scale(1);
+    will-change: transform;
+  }
+  25% { transform: rotate(1deg) scale(1.02); }
+  75% { transform: rotate(-1deg) scale(0.98); }
+}
+
+@keyframes optimizedBounce {
+  0%, 100% { 
+    transform: translateY(0px);
+    will-change: transform;
+  }
+  50% { transform: translateY(-5px); }
+}
+
+/* Use optimized animations for better performance */
+.floating-decoration {
+  animation: optimizedFloat 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.author-decoration,
+.book-decoration {
+  animation: optimizedWiggle 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.gallery-decoration {
+  animation: optimizedBounce 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Remove will-change after animations complete */
+.floating-decoration:hover,
+.author-decoration:hover,
+.book-decoration:hover,
+.gallery-decoration:hover {
+  will-change: auto;
+}
+
+/* Optimize images for different screen sizes and devices */
+@media (max-width: 480px) {
+  .hero-characters,
+  .author-image,
+  .book-image {
+    image-rendering: optimizeQuality;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .skip-link {
+    background: #000000;
+    border-color: #ffffff;
+  }
+  
+  .nav-link:focus,
+  .form-input:focus,
+  .form-textarea:focus,
+  .form-submit:focus {
+    outline: 3px solid #000000;
+    outline-offset: 2px;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .floating-decoration,
+  .author-decoration,
+  .book-decoration,
+  .gallery-decoration,
+  .hero-decoration {
+    animation: none;
+    will-change: auto;
+  }
+  
+  .hero-cta:hover,
+  .book-entry:hover,
+  .gallery-item:hover,
+  .nav-link:hover {
+    transform: none;
+  }
+  
+  /* Keep essential focus indicators */
+  .nav-link:focus,
+  .form-input:focus,
+  .form-textarea:focus,
+  .form-submit:focus {
+    transition: outline 0.1s ease;
+  }
+}
+
+/* Optimize for high DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .hero-characters,
+  .author-image,
+  .book-image,
+  .gallery-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Optimize scrolling performance */
+.section {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+/* Optimize hover effects */
+.nav-link,
+.hero-cta,
+.form-submit {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize lightbox performance */
+.lightbox {
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.lightbox-content {
+  will-change: transform, opacity;
+}
+
+.lightbox.active .lightbox-content {
+  will-change: auto;
+}
+
+/* Optimize form performance */
+.form-input,
+.form-textarea {
+  contain: layout style;
+}
+
+/* Optimize background gradients for better performance */
+.hero {
+  background-attachment: fixed;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    background-attachment: scroll;
+  }
+}
+
+/* Optimize decorative elements */
+.section-decorations,
+.gallery-decorations,
+.contact-decorations {
+  contain: layout style paint;
+  pointer-events: none;
+}
+
+/* Optimize gallery grid for better performance */
+.gallery-grid {
+  contain: layout;
+}
+
+.gallery-item {
+  contain: layout style paint;
+}
+
+/* Optimize contact form for better performance */
+.contact-form {
+  contain: layout style;
+}
+
+/* Optimize footer for better performance */
+.footer {
+  contain: layout style paint;
+}
+
+/* Focus management for keyboard navigation */
+.keyboard-navigation *:focus {
+  outline: 3px solid var(--color-primary-orange, #FF6B35) !important;
+  outline-offset: 2px !important;
+}
+
+.keyboard-navigation .nav-link:focus {
+  outline-color: white !important;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Ensure decorative elements don't interfere with screen readers */
+[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+[role="presentation"] {
+  pointer-events: none;
+}
+
+/* Optimize image loading states */
+img.lazy {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+img.lazy.loaded {
+  opacity: 1;
+  background: none;
+  animation: none;
+}
+
+/* Critical images should load immediately */
+.hero-characters,
+.hero-character,
+.hero-character-2,
+.author-image {
+  opacity: 1;
+}
+
+/* Optimize critical path rendering */
+.header {
+  will-change: background-color, box-shadow;
+}
+
+.header.scrolled {
+  will-change: auto;
+}
+
+/* Preload critical resources */
+.preload-critical {
+  display: none;
+}
+
+/* Optimize text rendering */
+body {
+  text-rendering: optimizeSpeed;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-rendering: optimizeLegibility;
+}
+
+/* Optimize for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link:hover,
+  .hero-cta:hover,
+  .book-entry:hover,
+  .gallery-item:hover {
+    transform: none;
+  }
+  
+  /* Increase touch targets */
+  .nav-link,
+  .form-submit {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Print styles for accessibility */
+@media print {
+  .skip-link,
+  .nav-toggle,
+  .section-decorations,
+  .gallery-decorations,
+  .contact-decorations,
+  .floating-decoration {
+    display: none !important;
+  }
+  
+  .section {
+    page-break-inside: avoid;
+  }
+  
+  .book-entry {
+    page-break-inside: avoid;
+  }
+}

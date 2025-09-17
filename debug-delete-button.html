@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Delete Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .content-block {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .content-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .block-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .block-action-button {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .delete-block {
+            background: #ff4444;
+            color: white;
+            border-color: #cc0000;
+        }
+        .delete-block:hover {
+            background: #cc0000;
+        }
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delete Button Debug Test</h1>
+    
+    <div class="debug-info">
+        <strong>Instructions:</strong><br>
+        1. Click the delete buttons below<br>
+        2. Check the console for debug messages<br>
+        3. Verify that blocks are removed from the DOM
+    </div>
+    
+    <div id="editorContent">
+        <div class="content-block text-block" data-id="18">
+            <div class="content-block-header">
+                <span>Text Block (ID: 18)</span>
+                <div class="block-actions">
+                    <button class="block-action-button move-up">↑</button>
+                    <button class="block-action-button move-down">↓</button>
+                    <button class="block-action-button delete-block">Delete</button>
+                </div>
+            </div>
+            <div class="content-block-body">
+                <p>This is the content that should be deletable.</p>
+            </div>
+        </div>
+        
+        <div class="content-block text-block" data-id="19">
+            <div class="content-block-header">
+                <span>Text Block (ID: 19)</span>
+                <div class="block-actions">
+                    <button class="block-action-button move-up">↑</button>
+                    <button class="block-action-button move-down">↓</button>
+                    <button class="block-action-button delete-block">Delete</button>
+                </div>
+            </div>
+            <div class="content-block-body">
+                <p>This is another content block.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="debug-info">
+        <strong>Debug Actions:</strong><br>
+        <button onclick="testEventDelegation()">Test Event Delegation</button>
+        <button onclick="testDirectClick()">Test Direct Click</button>
+        <button onclick="listBlocks()">List Blocks</button>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+    
+    <div id="debugOutput"></div>
+
+    <script>
+        // Simulate the deleteBlock method
+        function deleteBlock(blockElement) {
+            console.log('deleteBlock called for element:', blockElement);
+            console.log('Block ID:', blockElement.dataset.id);
+            
+            if (confirm('Are you sure you want to delete this content block?')) {
+                console.log('User confirmed deletion, removing block');
+                blockElement.remove();
+                
+                // Show remaining blocks
+                const editorContent = document.getElementById('editorContent');
+                const remainingBlocks = editorContent.querySelectorAll('.content-block');
+                console.log('Remaining blocks after deletion:', remainingBlocks.length);
+                
+                updateDebugOutput();
+            } else {
+                console.log('User cancelled deletion');
+            }
+        }
+        
+        // Event delegation (like in the fixed code)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-block')) {
+                console.log('Delete button clicked via event delegation');
+                const blockElement = e.target.closest('.content-block');
+                if (blockElement) {
+                    console.log('Found block element:', blockElement.dataset.id);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteBlock(blockElement);
+                }
+            }
+        });
+        
+        function testEventDelegation() {
+            console.log('Testing event delegation...');
+            const deleteButton = document.querySelector('.delete-block');
+            if (deleteButton) {
+                deleteButton.click();
+            }
+        }
+        
+        function testDirectClick() {
+            console.log('Testing direct deleteBlock call...');
+            const firstBlock = document.querySelector('.content-block');
+            if (firstBlock) {
+                deleteBlock(firstBlock);
+            }
+        }
+        
+        function listBlocks() {
+            const blocks = document.querySelectorAll('.content-block');
+            console.log('Current blocks:');
+            blocks.forEach((block, index) => {
+                console.log(`${index + 1}. ID: ${block.dataset.id}`);
+            });
+            updateDebugOutput();
+        }
+        
+        function updateDebugOutput() {
+            const blocks = document.querySelectorAll('.content-block');
+            const output = document.getElementById('debugOutput');
+            output.innerHTML = `
+                <div class="debug-info">
+                    <strong>Current State:</strong><br>
+                    Total blocks: ${blocks.length}<br>
+                    Block IDs: [${Array.from(blocks).map(b => b.dataset.id).join(', ')}]
+                </div>
+            `;
+        }
+        
+        function clearConsole() {
+            console.clear();
+        }
+        
+        // Initial state
+        updateDebugOutput();
+    </script>
+</body>
+</html>

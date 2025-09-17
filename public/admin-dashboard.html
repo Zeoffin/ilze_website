@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ilze Skrastiņa</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Open+Sans:wght@300;400;600&family=Comfortaa:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body class="admin-dashboard-body">
+    <div class="admin-dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-header-left">
+                    <h1 class="admin-title">Admin Dashboard</h1>
+                    <p class="admin-subtitle">Ilze Skrastiņa Website Management</p>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-user-info">
+                        <span class="admin-username" id="adminUsername">Loading...</span>
+                        <div class="admin-user-menu">
+                            <button class="admin-user-button" id="userMenuButton" aria-expanded="false" aria-haspopup="true">
+                                <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6,9 12,15 18,9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="admin-user-dropdown" id="userDropdown">
+                                <button class="dropdown-item logout-button" id="logoutButton">
+                                    <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                        <polyline points="16,17 21,12 16,7"></polyline>
+                                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                                    </svg>
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Main Content -->
+        <main class="admin-main">
+            <div class="admin-content">
+                <!-- Welcome Section -->
+                <section class="welcome-section">
+                    <div class="welcome-card">
+                        <h2>Welcome back!</h2>
+                        <p>Manage your website content using the section editors below.</p>
+                        <div class="session-info">
+                            <span class="session-timer" id="sessionTimer">Session active</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section Management -->
+                <section class="section-management">
+                    <h2 class="section-title">Content Management</h2>
+                    <div class="section-grid">
+                        <!-- Interesanti Section -->
+                        <div class="section-card" data-section="interesanti">
+                            <div class="section-card-header">
+                                <div class="section-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                    </svg>
+                                </div>
+                                <h3>Interesanti</h3>
+                                <p>Author information and biography</p>
+                            </div>
+                            <div class="section-card-actions">
+                                <button class="edit-button" data-section="interesanti">
+                                    <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit Content
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grāmatas Section -->
+                        <div class="section-card" data-section="gramatas">
+                            <div class="section-card-header">
+                                <div class="section-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                </div>
+                                <h3>Grāmatas</h3>
+                                <p>Book showcase and descriptions</p>
+                            </div>
+                            <div class="section-card-actions">
+                                <button class="edit-button" data-section="gramatas">
+                                    <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit Content
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Fragmenti Section -->
+                        <div class="section-card" data-section="fragmenti">
+                            <div class="section-card-header">
+                                <div class="section-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21,15 16,10 5,21"></polyline>
+                                    </svg>
+                                </div>
+                                <h3>Fragmenti</h3>
+                                <p>Book preview images and gallery</p>
+                            </div>
+                            <div class="section-card-actions">
+                                <button class="edit-button" data-section="fragmenti">
+                                    <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit Content
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Actions -->
+                <section class="quick-actions">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="action-button" id="viewWebsiteButton">
+                            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15,3 21,3 21,9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                            View Website
+                        </button>
+                        <button class="action-button" id="refreshDataButton">
+                            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23,4 23,10 17,10"></polyline>
+                                <polyline points="1,20 1,14 7,14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refresh Data
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="admin-footer">
+            <div class="admin-footer-content">
+                <p>&copy; 2024 Ilze Skrastiņa Website Admin Panel</p>
+                <div class="footer-links">
+                    <a href="/" target="_blank" rel="noopener">View Website</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                    <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                    <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Session Timeout Warning Modal -->
+    <div class="modal-overlay" id="sessionWarningModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Session Expiring Soon</h3>
+            </div>
+            <div class="modal-body">
+                <p>Your session will expire in <span id="warningCountdown">5</span> minutes. Would you like to extend your session?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="button-secondary" id="extendSessionButton">Extend Session</button>
+                <button class="button-primary" id="logoutNowButton">Logout Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin-utils.js"></script>
+    <script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

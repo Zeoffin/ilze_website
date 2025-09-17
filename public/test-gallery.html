@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gallery</title>
+    <style>
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .gallery-item {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .gallery-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gallery Test</h1>
+    <button onclick="testGallery()">Test Gallery Loading</button>
+    <button onclick="checkImages()">Check Images Exist</button>
+    
+    <div class="gallery-grid" id="gallery-grid">
+        <!-- Gallery will be populated here -->
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function testGallery() {
+            const galleryContainer = document.getElementById('gallery-grid');
+            galleryContainer.innerHTML = '';
+            
+            const previewImages = [
+                {
+                    src: '/media/book_preview.jpg',
+                    alt: 'Book Preview 1',
+                    title: 'Fragment 1'
+                },
+                {
+                    src: '/media/book_preview_2.jpg',
+                    alt: 'Book Preview 2', 
+                    title: 'Fragment 2'
+                },
+                {
+                    src: '/media/book_preview_3.jpg',
+                    alt: 'Book Preview 3',
+                    title: 'Fragment 3'
+                }
+            ];
+            
+            previewImages.forEach((imageData, index) => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                
+                const image = document.createElement('img');
+                image.src = imageData.src;
+                image.alt = imageData.alt;
+                image.className = 'gallery-image';
+                
+                image.onload = () => {
+                    console.log(`Image ${index + 1} loaded successfully`);
+                };
+                
+                image.onerror = () => {
+                    console.log(`Image ${index + 1} failed to load: ${imageData.src}`);
+                    image.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+                };
+                
+                galleryItem.appendChild(image);
+                galleryContainer.appendChild(galleryItem);
+            });
+            
+            document.getElementById('results').innerHTML = '<p>Gallery test initiated. Check console for image loading results.</p>';
+        }
+        
+        async function checkImages() {
+            const images = [
+                '/media/book_preview.jpg',
+                '/media/book_preview_2.jpg', 
+                '/media/book_preview_3.jpg'
+            ];
+            
+            let results = '<h3>Image Check Results:</h3>';
+            
+            for (const imagePath of images) {
+                try {
+                    const response = await fetch(imagePath, { method: 'HEAD' });
+                    if (response.ok) {
+                        results += `<p>✅ ${imagePath} - EXISTS</p>`;
+                    } else {
+                        results += `<p>❌ ${imagePath} - NOT FOUND (${response.status})</p>`;
+                    }
+                } catch (error) {
+                    results += `<p>❌ ${imagePath} - ERROR: ${error.message}</p>`;
+                }
+            }
+            
+            document.getElementById('results').innerHTML = results;
+        }
+    </script>
+</body>
+</html>

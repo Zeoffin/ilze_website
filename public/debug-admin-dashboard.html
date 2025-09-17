@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; background: #f9f9f9; }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+        .info { color: blue; }
+        pre { background: #eee; padding: 10px; overflow-x: auto; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h2>1. JavaScript Error Detection</h2>
+        <div id="jsErrors">No errors detected yet...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. Admin Authentication Test</h2>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="authResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Admin Utils Test</h2>
+        <button onclick="testAdminUtils()">Test Admin Utils</button>
+        <div id="utilsResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Dashboard JavaScript Test</h2>
+        <button onclick="testDashboardJS()">Test Dashboard JS</button>
+        <div id="dashboardResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>5. Network Requests Test</h2>
+        <button onclick="testNetworkRequests()">Test Network</button>
+        <div id="networkResult"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>6. Console Logs</h2>
+        <div id="consoleLogs"></div>
+    </div>
+
+    <script>
+        // Capture all JavaScript errors
+        const jsErrors = [];
+        const originalConsoleError = console.error;
+        const originalConsoleLog = console.log;
+        const consoleLogs = [];
+        
+        window.addEventListener('error', function(e) {
+            const error = `Error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`;
+            jsErrors.push(error);
+            updateErrorDisplay();
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            const error = `Unhandled Promise Rejection: ${e.reason}`;
+            jsErrors.push(error);
+            updateErrorDisplay();
+        });
+        
+        console.error = function(...args) {
+            consoleLogs.push(`ERROR: ${args.join(' ')}`);
+            updateConsoleDisplay();
+            originalConsoleError.apply(console, args);
+        };
+        
+        console.log = function(...args) {
+            consoleLogs.push(`LOG: ${args.join(' ')}`);
+            updateConsoleDisplay();
+            originalConsoleLog.apply(console, args);
+        };
+        
+        function updateErrorDisplay() {
+            const errorDiv = document.getElementById('jsErrors');
+            if (jsErrors.length === 0) {
+                errorDiv.innerHTML = '<span class="success">No JavaScript errors detected</span>';
+            } else {
+                errorDiv.innerHTML = '<span class="error">JavaScript Errors Found:</span><pre>' + 
+                    jsErrors.join('\n') + '</pre>';
+            }
+        }
+        
+        function updateConsoleDisplay() {
+            const consoleDiv = document.getElementById('consoleLogs');
+            consoleDiv.innerHTML = '<pre>' + consoleLogs.slice(-20).join('\n') + '</pre>';
+        }
+        
+        async function testAuth() {
+            const resultDiv = document.getElementById('authResult');
+            try {
+                resultDiv.innerHTML = '<span class="info">Testing authentication...</span>';
+                
+                const response = await fetch('/admin/status', {
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">Auth Status: ${data.isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</span><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">Auth request failed: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Auth test error: ${error.message}</span>`;
+            }
+        }
+        
+        function testAdminUtils() {
+            const resultDiv = document.getElementById('utilsResult');
+            try {
+                // Test if admin-utils.js is loaded
+                if (typeof window.adminUtils !== 'undefined') {
+                    resultDiv.innerHTML = '<span class="success">✅ Admin Utils loaded successfully</span>';
+                    
+                    // Test methods
+                    const methods = ['checkAuthStatus', 'authenticatedFetch', 'showMessage'];
+                    let methodResults = [];
+                    
+                    methods.forEach(method => {
+                        if (typeof window.adminUtils[method] === 'function') {
+                            methodResults.push(`✅ ${method}: available`);
+                        } else {
+                            methodResults.push(`❌ ${method}: missing`);
+                        }
+                    });
+                    
+                    resultDiv.innerHTML += '<pre>' + methodResults.join('\n') + '</pre>';
+                } else {
+                    resultDiv.innerHTML = '<span class="error">❌ Admin Utils not loaded</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Admin Utils test error: ${error.message}</span>`;
+            }
+        }
+        
+        function testDashboardJS() {
+            const resultDiv = document.getElementById('dashboardResult');
+            try {
+                // Check if dashboard classes/functions exist
+                const checks = [
+                    { name: 'AdminDashboard class', check: () => typeof AdminDashboard !== 'undefined' },
+                    { name: 'DOM Content Loaded', check: () => document.readyState === 'complete' },
+                    { name: 'Required elements', check: () => {
+                        const required = ['adminUsername', 'userMenuButton', 'logoutButton'];
+                        return required.every(id => document.getElementById(id) !== null);
+                    }}
+                ];
+                
+                let results = [];
+                checks.forEach(check => {
+                    try {
+                        const result = check.check();
+                        results.push(`${result ? '✅' : '❌'} ${check.name}: ${result}`);
+                    } catch (error) {
+                        results.push(`❌ ${check.name}: Error - ${error.message}`);
+                    }
+                });
+                
+                resultDiv.innerHTML = '<pre>' + results.join('\n') + '</pre>';
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Dashboard JS test error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testNetworkRequests() {
+            const resultDiv = document.getElementById('networkResult');
+            const endpoints = [
+                '/admin/status',
+                '/admin/dashboard',
+                '/js/admin-utils.js',
+                '/js/admin-dashboard.js'
+            ];
+            
+            let results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint, { credentials: 'same-origin' });
+                    results.push(`${response.ok ? '✅' : '❌'} ${endpoint}: ${response.status} ${response.statusText}`);
+                } catch (error) {
+                    results.push(`❌ ${endpoint}: ${error.message}`);
+                }
+            }
+            
+            resultDiv.innerHTML = '<pre>' + results.join('\n') + '</pre>';
+        }
+        
+        // Auto-run some tests on page load
+        window.addEventListener('load', () => {
+            console.log('Debug page loaded, running initial tests...');
+            updateErrorDisplay();
+            testAuth();
+            testAdminUtils();
+            testDashboardJS();
+        });
+        
+        // Update displays every 2 seconds
+        setInterval(() => {
+            updateErrorDisplay();
+            updateConsoleDisplay();
+        }, 2000);
+    </script>
+</body>
+</html>

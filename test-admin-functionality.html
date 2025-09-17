@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Functionality</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        #results { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Admin Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Admin Login Status</h2>
+        <button onclick="testAdminStatus()">Check Admin Status</button>
+        <div id="adminStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Content Loading</h2>
+        <button onclick="testContentLoading('interesanti')">Load Interesanti</button>
+        <button onclick="testContentLoading('gramatas')">Load Gramatas</button>
+        <button onclick="testContentLoading('fragmenti')">Load Fragmenti</button>
+        <div id="contentResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Add Test Content</h2>
+        <button onclick="addTestContent('interesanti')">Add to Interesanti</button>
+        <button onclick="addTestContent('gramatas')">Add to Gramatas</button>
+        <button onclick="addTestContent('fragmenti')">Add to Fragmenti</button>
+        <div id="addResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Test Editor Navigation</h2>
+        <button onclick="testEditorNavigation('interesanti')">Go to Interesanti Editor</button>
+        <button onclick="testEditorNavigation('gramatas')">Go to Gramatas Editor</button>
+        <button onclick="testEditorNavigation('fragmenti')">Go to Fragmenti Editor</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testAdminStatus() {
+            try {
+                log('Testing admin status...', 'info');
+                const response = await fetch('/admin/status');
+                const data = await response.json();
+                
+                document.getElementById('adminStatus').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.isAuthenticated) {
+                    log('✅ Admin is authenticated', 'success');
+                } else {
+                    log('❌ Admin not authenticated - please login first', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error checking admin status: ${error.message}`, 'error');
+            }
+        }
+
+        async function testContentLoading(section) {
+            try {
+                log(`Testing content loading for ${section}...`, 'info');
+                const response = await fetch(`/admin/content/${section}`, {
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('contentResults').innerHTML = 
+                        `<h3>${section} Content:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`✅ Loaded ${data.content?.length || 0} items for ${section}`, 'success');
+                } else {
+                    log(`❌ Failed to load content for ${section}: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error loading content for ${section}: ${error.message}`, 'error');
+            }
+        }
+
+        async function addTestContent(section) {
+            try {
+                log(`Adding test content to ${section}...`, 'info');
+                
+                const testContent = [
+                    {
+                        content_type: 'text',
+                        content: `<h2>Test Content for ${section}</h2><p>This is test content added on ${new Date().toLocaleString()}. You can edit this content using the admin panel.</p>`
+                    }
+                ];
+
+                if (section === 'fragmenti') {
+                    testContent.push({
+                        content_type: 'image',
+                        content: '/media/placeholder-book.jpg'
+                    });
+                }
+
+                const response = await fetch(`/admin/content/${section}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ content: testContent })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('addResults').innerHTML = 
+                        `<h3>Added to ${section}:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`✅ Successfully added test content to ${section}`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Failed to add content to ${section}: ${errorData.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error adding content to ${section}: ${error.message}`, 'error');
+            }
+        }
+
+        function testEditorNavigation(section) {
+            log(`Testing navigation to ${section} editor...`, 'info');
+            const url = `/admin/editor?section=${section}`;
+            window.open(url, '_blank');
+            log(`✅ Opened editor for ${section} in new tab`, 'success');
+        }
+
+        // Auto-check admin status on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, checking admin status...', 'info');
+            testAdminStatus();
+        });
+    </script>
+</body>
+</html>

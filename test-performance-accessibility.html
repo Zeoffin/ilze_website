@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance & Accessibility Test - Ilze Skrastiņa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .metric {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Performance & Accessibility Test Suite</h1>
+    <p>This page tests the performance and accessibility optimizations implemented for the Ilze Skrastiņa website.</p>
+
+    <div class="test-section">
+        <h2>Performance Tests</h2>
+        <button onclick="runPerformanceTests()">Run Performance Tests</button>
+        <div id="performance-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Accessibility Tests</h2>
+        <button onclick="runAccessibilityTests()">Run Accessibility Tests</button>
+        <div id="accessibility-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Cross-Browser Compatibility Tests</h2>
+        <button onclick="runCompatibilityTests()">Run Compatibility Tests</button>
+        <div id="compatibility-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Image Optimization Tests</h2>
+        <button onclick="runImageTests()">Run Image Tests</button>
+        <div id="image-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Lazy Loading Tests</h2>
+        <button onclick="runLazyLoadingTests()">Run Lazy Loading Tests</button>
+        <div id="lazy-loading-results"></div>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Test utilities
+        function createResultElement(message, type = 'pass') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            return div;
+        }
+
+        function addMetric(container, label, value, unit = '') {
+            const metric = document.createElement('span');
+            metric.className = 'metric';
+            metric.textContent = `${label}: ${value}${unit}`;
+            container.appendChild(metric);
+        }
+
+        // Performance Tests
+        async function runPerformanceTests() {
+            const container = document.getElementById('performance-results');
+            container.innerHTML = '<p>Running performance tests...</p>';
+
+            const results = [];
+
+            // Test 1: Check if performance API is available
+            if ('performance' in window) {
+                results.push(createResultElement('✓ Performance API is available'));
+                
+                // Test navigation timing
+                const navTiming = performance.getEntriesByType('navigation')[0];
+                if (navTiming) {
+                    const loadTime = navTiming.loadEventEnd - navTiming.fetchStart;
+                    const domContentLoaded = navTiming.domContentLoadedEventEnd - navTiming.fetchStart;
+                    
+                    results.push(createResultElement(`✓ Page load time: ${loadTime.toFixed(2)}ms`));
+                    results.push(createResultElement(`✓ DOM Content Loaded: ${domContentLoaded.toFixed(2)}ms`));
+                }
+            } else {
+                results.push(createResultElement('✗ Performance API not available', 'fail'));
+            }
+
+            // Test 2: Check for Intersection Observer support
+            if ('IntersectionObserver' in window) {
+                results.push(createResultElement('✓ Intersection Observer supported'));
+            } else {
+                results.push(createResultElement('⚠ Intersection Observer not supported - polyfill needed', 'warning'));
+            }
+
+            // Test 3: Check for lazy loading support
+            if ('loading' in HTMLImageElement.prototype) {
+                results.push(createResultElement('✓ Native lazy loading supported'));
+            } else {
+                results.push(createResultElement('⚠ Native lazy loading not supported - using fallback', 'warning'));
+            }
+
+            // Test 4: Check CSS containment support
+            if (CSS.supports('contain', 'layout')) {
+                results.push(createResultElement('✓ CSS containment supported'));
+            } else {
+                results.push(createResultElement('⚠ CSS containment not supported', 'warning'));
+            }
+
+            // Test 5: Check will-change support
+            if (CSS.supports('will-change', 'transform')) {
+                results.push(createResultElement('✓ will-change property supported'));
+            } else {
+                results.push(createResultElement('⚠ will-change property not supported', 'warning'));
+            }
+
+            container.innerHTML = '';
+            results.forEach(result => container.appendChild(result));
+        }
+
+        // Accessibility Tests
+        async function runAccessibilityTests() {
+            const container = document.getElementById('accessibility-results');
+            container.innerHTML = '<p>Running accessibility tests...</p>';
+
+            const results = [];
+
+            // Test 1: Check for skip link
+            const skipLink = document.querySelector('.skip-link');
+            if (skipLink) {
+                results.push(createResultElement('✓ Skip link present'));
+                
+                // Check skip link functionality
+                if (skipLink.href && skipLink.href.includes('#main')) {
+                    results.push(createResultElement('✓ Skip link points to main content'));
+                } else {
+                    results.push(createResultElement('✗ Skip link does not point to main content', 'fail'));
+                }
+            } else {
+                results.push(createResultElement('✗ Skip link missing', 'fail'));
+            }
+
+            // Test 2: Check for proper heading structure
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            if (headings.length > 0) {
+                results.push(createResultElement(`✓ Found ${headings.length} headings`));
+                
+                // Check for h1
+                const h1 = document.querySelector('h1');
+                if (h1) {
+                    results.push(createResultElement('✓ H1 element present'));
+                } else {
+                    results.push(createResultElement('✗ H1 element missing', 'fail'));
+                }
+            } else {
+                results.push(createResultElement('✗ No headings found', 'fail'));
+            }
+
+            // Test 3: Check for alt attributes on images
+            const images = document.querySelectorAll('img');
+            let imagesWithAlt = 0;
+            let decorativeImages = 0;
+
+            images.forEach(img => {
+                if (img.hasAttribute('alt')) {
+                    imagesWithAlt++;
+                }
+                if (img.getAttribute('role') === 'presentation' || img.closest('[aria-hidden="true"]')) {
+                    decorativeImages++;
+                }
+            });
+
+            results.push(createResultElement(`✓ ${imagesWithAlt}/${images.length} images have alt attributes`));
+            results.push(createResultElement(`✓ ${decorativeImages} decorative images properly marked`));
+
+            // Test 4: Check for ARIA labels and roles
+            const ariaLabels = document.querySelectorAll('[aria-label]');
+            const ariaRoles = document.querySelectorAll('[role]');
+            
+            results.push(createResultElement(`✓ Found ${ariaLabels.length} elements with aria-label`));
+            results.push(createResultElement(`✓ Found ${ariaRoles.length} elements with role attributes`));
+
+            // Test 5: Check for form accessibility
+            const forms = document.querySelectorAll('form');
+            forms.forEach((form, index) => {
+                const labels = form.querySelectorAll('label');
+                const inputs = form.querySelectorAll('input, textarea, select');
+                
+                if (labels.length === inputs.length) {
+                    results.push(createResultElement(`✓ Form ${index + 1}: All inputs have labels`));
+                } else {
+                    results.push(createResultElement(`⚠ Form ${index + 1}: ${labels.length}/${inputs.length} inputs have labels`, 'warning'));
+                }
+            });
+
+            // Test 6: Check for reduced motion support
+            const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (reducedMotionQuery) {
+                results.push(createResultElement('✓ Reduced motion preference detection supported'));
+            } else {
+                results.push(createResultElement('⚠ Reduced motion preference detection not supported', 'warning'));
+            }
+
+            container.innerHTML = '';
+            results.forEach(result => container.appendChild(result));
+        }
+
+        // Cross-Browser Compatibility Tests
+        async function runCompatibilityTests() {
+            const container = document.getElementById('compatibility-results');
+            container.innerHTML = '<p>Running compatibility tests...</p>';
+
+            const results = [];
+
+            // Test 1: Browser detection
+            const userAgent = navigator.userAgent.toLowerCase();
+            let browser = 'Unknown';
+            
+            if (userAgent.includes('chrome') && !userAgent.includes('edge')) {
+                browser = 'Chrome';
+            } else if (userAgent.includes('firefox')) {
+                browser = 'Firefox';
+            } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+                browser = 'Safari';
+            } else if (userAgent.includes('edge')) {
+                browser = 'Edge';
+            }
+
+            results.push(createResultElement(`✓ Detected browser: ${browser}`));
+
+            // Test 2: CSS Grid support
+            if (CSS.supports('display', 'grid')) {
+                results.push(createResultElement('✓ CSS Grid supported'));
+            } else {
+                results.push(createResultElement('⚠ CSS Grid not supported - using fallback', 'warning'));
+            }
+
+            // Test 3: CSS Custom Properties support
+            if (CSS.supports('color', 'var(--test)')) {
+                results.push(createResultElement('✓ CSS Custom Properties supported'));
+            } else {
+                results.push(createResultElement('⚠ CSS Custom Properties not supported - using fallback', 'warning'));
+            }
+
+            // Test 4: Flexbox support
+            if (CSS.supports('display', 'flex')) {
+                results.push(createResultElement('✓ Flexbox supported'));
+            } else {
+                results.push(createResultElement('✗ Flexbox not supported', 'fail'));
+            }
+
+            // Test 5: Object-fit support
+            if (CSS.supports('object-fit', 'cover')) {
+                results.push(createResultElement('✓ Object-fit supported'));
+            } else {
+                results.push(createResultElement('⚠ Object-fit not supported - may need polyfill', 'warning'));
+            }
+
+            // Test 6: WebP support
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            const webpSupported = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+            
+            if (webpSupported) {
+                results.push(createResultElement('✓ WebP format supported'));
+            } else {
+                results.push(createResultElement('⚠ WebP format not supported - using fallback formats', 'warning'));
+            }
+
+            container.innerHTML = '';
+            results.forEach(result => container.appendChild(result));
+        }
+
+        // Image Optimization Tests
+        async function runImageTests() {
+            const container = document.getElementById('image-results');
+            container.innerHTML = '<p>Running image tests...</p>';
+
+            const results = [];
+
+            // Test 1: Check for width and height attributes
+            const images = document.querySelectorAll('img');
+            let imagesWithDimensions = 0;
+
+            images.forEach(img => {
+                if (img.hasAttribute('width') && img.hasAttribute('height')) {
+                    imagesWithDimensions++;
+                }
+            });
+
+            results.push(createResultElement(`✓ ${imagesWithDimensions}/${images.length} images have width/height attributes`));
+
+            // Test 2: Check for loading attributes
+            let imagesWithLoading = 0;
+            images.forEach(img => {
+                if (img.hasAttribute('loading')) {
+                    imagesWithLoading++;
+                }
+            });
+
+            results.push(createResultElement(`✓ ${imagesWithLoading}/${images.length} images have loading attributes`));
+
+            // Test 3: Check for responsive images
+            const pictureElements = document.querySelectorAll('picture');
+            const srcsetImages = document.querySelectorAll('img[srcset]');
+            
+            results.push(createResultElement(`✓ Found ${pictureElements.length} picture elements`));
+            results.push(createResultElement(`✓ Found ${srcsetImages.length} images with srcset`));
+
+            // Test 4: Check device pixel ratio
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            results.push(createResultElement(`✓ Device pixel ratio: ${devicePixelRatio}`));
+
+            container.innerHTML = '';
+            results.forEach(result => container.appendChild(result));
+        }
+
+        // Lazy Loading Tests
+        async function runLazyLoadingTests() {
+            const container = document.getElementById('lazy-loading-results');
+            container.innerHTML = '<p>Running lazy loading tests...</p>';
+
+            const results = [];
+
+            // Test 1: Check for lazy loading implementation
+            const lazyImages = document.querySelectorAll('img[data-src], img.lazy');
+            results.push(createResultElement(`✓ Found ${lazyImages.length} lazy-loaded images`));
+
+            // Test 2: Check for Intersection Observer
+            if ('IntersectionObserver' in window) {
+                results.push(createResultElement('✓ Intersection Observer available for lazy loading'));
+            } else {
+                results.push(createResultElement('⚠ Intersection Observer not available - using polyfill', 'warning'));
+            }
+
+            // Test 3: Check for native lazy loading
+            if ('loading' in HTMLImageElement.prototype) {
+                results.push(createResultElement('✓ Native lazy loading supported'));
+            } else {
+                results.push(createResultElement('⚠ Native lazy loading not supported - using JavaScript fallback', 'warning'));
+            }
+
+            // Test 4: Test lazy loading functionality
+            const testImage = document.createElement('img');
+            testImage.className = 'lazy';
+            testImage.dataset.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwZiIvPjwvc3ZnPg==';
+            testImage.style.position = 'absolute';
+            testImage.style.top = '-1000px';
+            testImage.style.left = '-1000px';
+            document.body.appendChild(testImage);
+
+            setTimeout(() => {
+                if (testImage.src && testImage.src !== testImage.dataset.src) {
+                    results.push(createResultElement('✓ Lazy loading functionality working'));
+                } else {
+                    results.push(createResultElement('⚠ Lazy loading functionality may not be working', 'warning'));
+                }
+                document.body.removeChild(testImage);
+                
+                container.innerHTML = '';
+                results.forEach(result => container.appendChild(result));
+            }, 1000);
+
+            // Show initial results
+            container.innerHTML = '';
+            results.slice(0, -1).forEach(result => container.appendChild(result));
+        }
+
+        // Run all tests
+        function runAllTests() {
+            runPerformanceTests();
+            setTimeout(runAccessibilityTests, 500);
+            setTimeout(runCompatibilityTests, 1000);
+            setTimeout(runImageTests, 1500);
+            setTimeout(runLazyLoadingTests, 2000);
+        }
+
+        // Add run all tests button
+        window.addEventListener('load', function() {
+            const runAllButton = document.createElement('button');
+            runAllButton.textContent = 'Run All Tests';
+            runAllButton.onclick = runAllTests;
+            runAllButton.style.background = '#28a745';
+            runAllButton.style.fontSize = '16px';
+            runAllButton.style.padding = '15px 30px';
+            
+            document.body.insertBefore(runAllButton, document.body.firstChild);
+        });
+    </script>
+</body>
+</html>

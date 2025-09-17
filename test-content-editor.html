@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Editor Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .test-result {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .content-block {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .empty-content {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>Content Editor Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Empty Content Detection</h2>
+        <p>This test checks if empty content is properly detected and filtered.</p>
+        
+        <div id="test1-results"></div>
+        <button onclick="runTest1()">Run Test 1</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Content Filtering</h2>
+        <p>This test simulates the content collection process.</p>
+        
+        <div id="test2-results"></div>
+        <button onclick="runTest2()">Run Test 2</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Save Simulation</h2>
+        <p>This test simulates the save process with various content scenarios.</p>
+        
+        <div id="test3-results"></div>
+        <button onclick="runTest3()">Run Test 3</button>
+    </div>
+
+    <script>
+        function isContentEmpty(content) {
+            const cleanContent = content.trim();
+            
+            return !cleanContent || 
+                   cleanContent === '<br>' || 
+                   cleanContent === '<div><br></div>' ||
+                   cleanContent === '<p><br></p>' ||
+                   cleanContent === '<p></p>' ||
+                   cleanContent.replace(/<[^>]*>/g, '').trim().length === 0;
+        }
+
+        function runTest1() {
+            const testCases = [
+                { content: '', expected: true, name: 'Empty string' },
+                { content: '<br>', expected: true, name: 'Single BR tag' },
+                { content: '<div><br></div>', expected: true, name: 'BR in div' },
+                { content: '<p><br></p>', expected: true, name: 'BR in paragraph' },
+                { content: '<p></p>', expected: true, name: 'Empty paragraph' },
+                { content: '   ', expected: true, name: 'Whitespace only' },
+                { content: '<div>   </div>', expected: true, name: 'Whitespace in div' },
+                { content: 'Hello world', expected: false, name: 'Valid text' },
+                { content: '<p>Hello world</p>', expected: false, name: 'Text in paragraph' },
+                { content: '<div>Content</div>', expected: false, name: 'Text in div' }
+            ];
+
+            const resultsDiv = document.getElementById('test1-results');
+            resultsDiv.innerHTML = '';
+
+            let passed = 0;
+            let total = testCases.length;
+
+            testCases.forEach(testCase => {
+                const result = isContentEmpty(testCase.content);
+                const success = result === testCase.expected;
+                
+                if (success) passed++;
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `test-result ${success ? 'success' : 'error'}`;
+                resultDiv.innerHTML = `
+                    <strong>${testCase.name}:</strong> 
+                    Expected ${testCase.expected}, got ${result} 
+                    ${success ? '✓' : '✗'}
+                `;
+                resultsDiv.appendChild(resultDiv);
+            });
+
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `test-result ${passed === total ? 'success' : 'error'}`;
+            summaryDiv.innerHTML = `<strong>Summary:</strong> ${passed}/${total} tests passed`;
+            resultsDiv.appendChild(summaryDiv);
+        }
+
+        function runTest2() {
+            const mockBlocks = [
+                { type: 'text', content: 'Valid content', id: '1' },
+                { type: 'text', content: '<br>', id: '2' },
+                { type: 'text', content: 'Another valid content', id: '3' },
+                { type: 'text', content: '', id: '4' },
+                { type: 'text', content: '<div><br></div>', id: '5' }
+            ];
+
+            const filteredBlocks = mockBlocks.filter(block => {
+                if (block.type === 'text') {
+                    return !isContentEmpty(block.content);
+                }
+                return true;
+            });
+
+            const resultsDiv = document.getElementById('test2-results');
+            resultsDiv.innerHTML = '';
+
+            const originalDiv = document.createElement('div');
+            originalDiv.className = 'test-result';
+            originalDiv.innerHTML = `<strong>Original blocks:</strong> ${mockBlocks.length}`;
+            resultsDiv.appendChild(originalDiv);
+
+            mockBlocks.forEach(block => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = `content-block ${isContentEmpty(block.content) ? 'empty-content' : ''}`;
+                blockDiv.innerHTML = `ID: ${block.id}, Content: "${block.content}" ${isContentEmpty(block.content) ? '(EMPTY)' : ''}`;
+                resultsDiv.appendChild(blockDiv);
+            });
+
+            const filteredDiv = document.createElement('div');
+            filteredDiv.className = 'test-result success';
+            filteredDiv.innerHTML = `<strong>Filtered blocks:</strong> ${filteredBlocks.length}`;
+            resultsDiv.appendChild(filteredDiv);
+
+            filteredBlocks.forEach(block => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = 'content-block';
+                blockDiv.innerHTML = `ID: ${block.id}, Content: "${block.content}"`;
+                resultsDiv.appendChild(blockDiv);
+            });
+        }
+
+        function runTest3() {
+            const scenarios = [
+                {
+                    name: 'Normal editing - add content',
+                    existing: [{ id: 1, content: 'Original content' }],
+                    incoming: [
+                        { id: 1, content: 'Updated content' },
+                        { content: 'New content' }
+                    ]
+                },
+                {
+                    name: 'Delete content by emptying',
+                    existing: [
+                        { id: 1, content: 'Content 1' },
+                        { id: 2, content: 'Content 2' }
+                    ],
+                    incoming: [
+                        { id: 1, content: 'Content 1' }
+                        // Content 2 is missing (deleted)
+                    ]
+                },
+                {
+                    name: 'Delete all content',
+                    existing: [
+                        { id: 1, content: 'Content 1' },
+                        { id: 2, content: 'Content 2' }
+                    ],
+                    incoming: []
+                }
+            ];
+
+            const resultsDiv = document.getElementById('test3-results');
+            resultsDiv.innerHTML = '';
+
+            scenarios.forEach(scenario => {
+                const scenarioDiv = document.createElement('div');
+                scenarioDiv.className = 'test-result';
+                
+                const existingIds = scenario.existing.map(item => item.id);
+                const incomingIds = scenario.incoming.filter(item => item.id).map(item => item.id);
+                const idsToDelete = existingIds.filter(id => !incomingIds.includes(id));
+                
+                scenarioDiv.innerHTML = `
+                    <strong>${scenario.name}</strong><br>
+                    Existing IDs: [${existingIds.join(', ')}]<br>
+                    Incoming IDs: [${incomingIds.join(', ')}]<br>
+                    IDs to delete: [${idsToDelete.join(', ')}]<br>
+                    New items: ${scenario.incoming.filter(item => !item.id).length}
+                `;
+                
+                resultsDiv.appendChild(scenarioDiv);
+            });
+        }
+    </script>
+</body>
+</html>

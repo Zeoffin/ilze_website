@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Fragmenti</title>
+</head>
+<body>
+    <h1>Debug Fragmenti Section</h1>
+    <button onclick="testFragmenti()">Test Fragmenti API</button>
+    <button onclick="addTestContent()">Add Test Content to Fragmenti</button>
+    <div id="results"></div>
+
+    <script>
+        async function testFragmenti() {
+            try {
+                const response = await fetch('/api/content/fragmenti');
+                const data = await response.json();
+                document.getElementById('results').innerHTML = 
+                    '<h3>Fragmenti API Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<h3>Error:</h3><pre>' + error.message + '</pre>';
+            }
+        }
+
+        async function addTestContent() {
+            try {
+                const testContent = [
+                    {
+                        content_type: 'text',
+                        content: '<h2>Grāmatas fragmenti</h2><p>Ieskatieties grāmatu lapaspusēs un iepazīstieties ar stāstiem.</p>'
+                    },
+                    {
+                        content_type: 'image',
+                        content: JSON.stringify({
+                            src: '/media/book_preview.jpg',
+                            alt: 'Pirmās grāmatas fragments'
+                        })
+                    },
+                    {
+                        content_type: 'image',
+                        content: JSON.stringify({
+                            src: '/media/book_preview_2.jpg',
+                            alt: 'Otrās grāmatas fragments'
+                        })
+                    },
+                    {
+                        content_type: 'image',
+                        content: JSON.stringify({
+                            src: '/media/book_preview_3.jpg',
+                            alt: 'Trešās grāmatas fragments'
+                        })
+                    }
+                ];
+
+                const response = await fetch('/admin/content/fragmenti', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ content: testContent })
+                });
+
+                const data = await response.json();
+                document.getElementById('results').innerHTML = 
+                    '<h3>Add Content Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<h3>Error:</h3><pre>' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

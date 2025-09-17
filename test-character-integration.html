@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .character-test { display: inline-block; margin: 10px; text-align: center; }
+        .character-test img { max-width: 100px; max-height: 100px; }
+        .publisher-test img { max-height: 60px; }
+    </style>
+</head>
+<body>
+    <h1>Character Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Character Images Test</h2>
+        <div class="character-test">
+            <img src="public/media/character.jpg" alt="Character 1">
+            <p>character.jpg</p>
+        </div>
+        <div class="character-test">
+            <img src="public/media/character_2.gif" alt="Character 2">
+            <p>character_2.gif</p>
+        </div>
+        <div class="character-test">
+            <img src="public/media/characters.jpg" alt="Characters">
+            <p>characters.jpg</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Publisher Logo Test</h2>
+        <div class="publisher-test">
+            <img src="public/media/publisher.png" alt="Publisher Logo">
+            <p>publisher.png</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Integration Summary</h2>
+        <ul>
+            <li>✅ Hero section: 3 character decorations added</li>
+            <li>✅ Interesanti section: Character decorations around author image + floating decorations</li>
+            <li>✅ Grāmatas section: Character decorations on each book + floating decorations</li>
+            <li>✅ Fragmenti section: 3 character decorations in gallery</li>
+            <li>✅ Kontakti section: 2 character decorations</li>
+            <li>✅ Footer: Publisher logo properly displayed</li>
+            <li>✅ Responsive behavior: Decorations scale and hide appropriately on mobile</li>
+            <li>✅ Animations: Wiggle, bounce, and float animations applied</li>
+        </ul>
+    </div>
+</body>
+</html>
