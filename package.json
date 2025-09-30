@@ -39,10 +39,13 @@
   ],
   "author": "Ilze Skrastiņa",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0 <19.0.0"
+  },
 
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "1.0.0-rc.12",
     "cors": "^2.8.5",
     "dompurify": "^3.0.5",
     "dotenv": "^16.3.1",
