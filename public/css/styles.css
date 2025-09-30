@@ -621,8 +621,726 @@ a:hover, a:focus {
 }
 
 /* ===================================
-   INTERESANTI SECTION
+   INTERESANTI PEOPLE SECTION
    =================================== */
+
+.interesanti-people {
+  background: linear-gradient(135deg, var(--color-white) 0%, var(--color-warm-white) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* People grid layout */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+  position: relative;
+  z-index: 2;
+}
+
+/* Person card styles */
+.person-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.person-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary-blue), var(--color-primary-green), var(--color-primary-yellow));
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.person-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-playful);
+  text-decoration: none;
+  color: inherit;
+}
+
+.person-card:hover::before {
+  opacity: 1;
+}
+
+.person-card:focus {
+  outline: 3px solid var(--color-primary-orange);
+  outline-offset: 2px;
+}
+
+/* Person card image */
+.person-card-image {
+  width: 100%;
+  height: 250px;
+  position: relative;
+  overflow: hidden;
+}
+
+.person-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.person-card:hover .person-card-image img {
+  transform: scale(1.1);
+}
+
+/* Person card content */
+.person-card-content {
+  padding: var(--spacing-lg);
+  position: relative;
+}
+
+.person-card-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-primary-orange);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.3;
+}
+
+.person-card-preview {
+  font-size: var(--font-size-base);
+  color: var(--color-light-text);
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Person card decorative elements */
+.person-card-decoration {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 40px;
+  height: 40px;
+  opacity: 0.7;
+  transition: all var(--transition-fast);
+  z-index: 1;
+}
+
+.person-card:hover .person-card-decoration {
+  opacity: 1;
+  transform: scale(1.1) rotate(10deg);
+}
+
+.person-card-decoration img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(var(--shadow-sm));
+}
+
+/* Section decorations for Interesanti */
+.interesanti-people .section-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.interesanti-people .floating-decoration {
+  position: absolute;
+  opacity: 0.4;
+  animation: float 8s ease-in-out infinite;
+}
+
+.interesanti-people .floating-decoration-1 {
+  top: 15%;
+  right: 5%;
+  width: 120px;
+  height: 120px;
+  animation-delay: -2s;
+}
+
+.interesanti-people .floating-decoration-2 {
+  bottom: 20%;
+  left: 3%;
+  width: 100px;
+  height: 100px;
+  animation-delay: -4s;
+}
+
+.interesanti-people .floating-decoration-3 {
+  top: 60%;
+  right: 8%;
+  width: 90px;
+  height: 90px;
+  animation-delay: -6s;
+}
+
+.decoration-character-floating,
+.decoration-character-floating-2,
+.decoration-characters-floating {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(var(--shadow-sm));
+}
+
+/* Loading state for people cards */
+.person-card.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.person-card.loading .person-card-content {
+  opacity: 0.5;
+}
+
+/* Error state for people cards */
+.person-card.error {
+  background: var(--color-error);
+  color: white;
+}
+
+.person-card.error .person-card-title {
+  color: white;
+}
+
+.person-card.error .person-card-preview {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive design for Interesanti section */
+@media (max-width: 1024px) {
+  .people-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+  }
+  
+  .person-card-image {
+    height: 220px;
+  }
+  
+  .interesanti-people .floating-decoration-1 {
+    width: 100px;
+    height: 100px;
+    right: 2%;
+  }
+  
+  .interesanti-people .floating-decoration-2 {
+    width: 80px;
+    height: 80px;
+    left: 2%;
+  }
+  
+  .interesanti-people .floating-decoration-3 {
+    width: 70px;
+    height: 70px;
+    right: 5%;
+  }
+}
+
+@media (max-width: 768px) {
+  .people-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+  }
+  
+  .person-card-image {
+    height: 200px;
+  }
+  
+  .person-card-content {
+    padding: var(--spacing-md);
+  }
+  
+  .person-card-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .person-card-preview {
+    font-size: var(--font-size-sm);
+    -webkit-line-clamp: 2;
+  }
+  
+  .person-card-decoration {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .interesanti-people .floating-decoration {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .people-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .person-card-image {
+    height: 180px;
+  }
+  
+  .person-card-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .person-card-decoration {
+    width: 30px;
+    height: 30px;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
+}
+
+/* Print styles for Interesanti section */
+@media print {
+  .interesanti-people .section-decorations,
+  .person-card-decoration {
+    display: none;
+  }
+  
+  .person-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .person-card:hover {
+    transform: none;
+  }
+  
+  .people-grid {
+    display: block;
+  }
+}
+
+/* Accessibility improvements for Interesanti section */
+@media (prefers-reduced-motion: reduce) {
+  .person-card,
+  .person-card-image img,
+  .person-card-decoration,
+  .interesanti-people .floating-decoration {
+    transition: none;
+    animation: none;
+  }
+  
+  .person-card:hover,
+  .person-card:hover .person-card-image img,
+  .person-card:hover .person-card-decoration {
+    transform: none;
+  }
+}
+
+/* High contrast mode for Interesanti section */
+@media (prefers-contrast: high) {
+  .person-card {
+    border: 2px solid #000;
+  }
+  
+  .person-card-title {
+    color: #000 !important;
+  }
+  
+  .person-card-preview {
+    color: #333 !important;
+  }
+}
+
+/* Focus management for keyboard navigation */
+.person-card:focus-visible {
+  outline: 3px solid var(--color-primary-orange);
+  outline-offset: 2px;
+}
+
+/* Ensure decorative elements don't interfere with screen readers */
+.person-card-decoration,
+.interesanti-people .floating-decoration {
+  pointer-events: none;
+}
+
+/* Enhanced person card interactions */
+.person-card-content::after {
+  content: '→';
+  position: absolute;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  color: var(--color-primary-blue);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all var(--transition-fast);
+}
+
+.person-card:hover .person-card-content::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Person card image overlay */
+.person-card-image::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(255, 107, 53, 0.1));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.person-card:hover .person-card-image::after {
+  opacity: 1;
+}
+
+/* Staggered animation for people cards */
+.person-card:nth-child(1) { animation-delay: 0.1s; }
+.person-card:nth-child(2) { animation-delay: 0.2s; }
+.person-card:nth-child(3) { animation-delay: 0.3s; }
+.person-card:nth-child(4) { animation-delay: 0.4s; }
+.person-card:nth-child(5) { animation-delay: 0.5s; }
+.person-card:nth-child(6) { animation-delay: 0.6s; }
+.person-card:nth-child(7) { animation-delay: 0.7s; }
+.person-card:nth-child(8) { animation-delay: 0.8s; }
+.person-card:nth-child(9) { animation-delay: 0.9s; }
+
+/* Fade in animation for people cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.person-card.animate-in {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+/* Empty state for people grid */
+.people-grid-empty {
+  text-align: center;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  color: var(--color-light-text);
+}
+
+.people-grid-empty-icon {
+  font-size: var(--font-size-4xl);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.people-grid-empty-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  color: var(--color-primary-orange);
+  margin-bottom: var(--spacing-md);
+}
+
+.people-grid-empty-text {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Loading skeleton for people cards */
+.person-card-skeleton {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.person-card-skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 250px;
+  background: #f0f0f0;
+}
+
+.skeleton-content {
+  padding: var(--spacing-lg);
+}
+
+.skeleton-title {
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.skeleton-text {
+  height: 16px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.skeleton-text:last-child {
+  width: 70%;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Section intro text styling */
+.interesanti-people .section-intro {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto var(--spacing-3xl);
+  padding: 0 var(--spacing-lg);
+}
+
+.interesanti-people .section-intro-text {
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+  color: var(--color-dark-text);
+  margin-bottom: var(--spacing-lg);
+}
+
+.interesanti-people .section-intro-highlight {
+  font-family: var(--font-accent);
+  color: var(--color-primary-orange);
+  font-weight: 600;
+}
+
+/* Error and loading states for people grid */
+.people-grid-error {
+  text-align: center;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  color: var(--color-light-text);
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  margin: var(--spacing-xl) 0;
+}
+
+.people-grid-error-icon {
+  font-size: var(--font-size-4xl);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.7;
+}
+
+.people-grid-error-message {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  color: var(--color-primary-orange);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.people-grid-error p {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.people-grid-retry {
+  background: linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-green));
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+
+.people-grid-retry:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--color-primary-orange), var(--color-secondary-pink));
+}
+
+.people-grid-retry:focus {
+  outline: 3px solid var(--color-primary-yellow);
+  outline-offset: 2px;
+}
+
+.people-grid-retry:active {
+  transform: translateY(0);
+}
+
+/* Loading state for people grid */
+.people-grid.loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.people-grid.loading .person-card-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Enhanced visual feedback for interactive elements */
+.person-card:active {
+  transform: translateY(-4px) scale(0.98);
+}
+
+.person-card-decoration:hover {
+  animation-play-state: paused;
+}
+
+/* Improved accessibility for people cards */
+.person-card[aria-pressed="true"] {
+  background: var(--color-soft-gray);
+}
+
+.person-card:focus-within {
+  outline: 3px solid var(--color-primary-orange);
+  outline-offset: 2px;
+}
+
+/* Enhanced mobile experience */
+@media (hover: none) and (pointer: coarse) {
+  .person-card:hover {
+    transform: none;
+  }
+  
+  .person-card:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+  }
+  
+  .person-card-content::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Dark mode support (if implemented in the future) */
+@media (prefers-color-scheme: dark) {
+  .person-card {
+    background: #2a2a2a;
+    color: #ffffff;
+  }
+  
+  .person-card-title {
+    color: var(--color-primary-orange);
+  }
+  
+  .person-card-preview {
+    color: #cccccc;
+  }
+  
+  .people-grid-error {
+    background: #2a2a2a;
+    color: #ffffff;
+  }
+}
+
+/* Final enhancements for visual consistency */
+.interesanti-people .section-title {
+  position: relative;
+}
+
+.interesanti-people .section-title::before {
+  content: '👥';
+  position: absolute;
+  left: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+  opacity: 0.7;
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+.interesanti-people .section-title::after {
+  content: '✨';
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.6em;
+  opacity: 0.7;
+  animation: sparkle 3s ease-in-out infinite -1.5s;
+}
+
+/* Ensure proper spacing and alignment */
+.people-grid {
+  min-height: 400px; /* Prevent layout shift during loading */
+}
+
+.people-grid:empty::before {
+  content: 'Ielādē interesantos cilvēkus...';
+  display: block;
+  text-align: center;
+  padding: var(--spacing-4xl);
+  color: var(--color-light-text);
+  font-style: italic;
+}
+
+/* Enhanced card interactions */
+.person-card {
+  will-change: transform;
+}
+
+.person-card:hover {
+  will-change: auto;
+}
+
+/* Optimize for touch devices */
+@media (pointer: coarse) {
+  .person-card {
+    min-height: 320px;
+  }
+  
+  .person-card-content {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  
+  .person-card-decoration {
+    width: 45px;
+    height: 45px;
+  }
+}
 
 .interesanti {
   background: linear-gradient(135deg, var(--color-white) 0%, var(--color-warm-white) 100%);
@@ -2517,6 +3235,247 @@ button:hover::before,
 }
 
 /* ===================================
+   INTERESANTI PEOPLE SECTION
+   =================================== */
+
+.interesanti-people {
+  background: linear-gradient(135deg, var(--color-warm-white) 0%, var(--color-soft-gray) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+.person-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-normal);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.person-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-playful);
+  text-decoration: none;
+  color: inherit;
+}
+
+.person-card:focus {
+  outline: 3px solid var(--color-primary-orange);
+  outline-offset: 2px;
+}
+
+.person-image-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
+
+.person-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-normal);
+}
+
+.person-card:hover .person-image {
+  transform: scale(1.05);
+}
+
+.person-content {
+  padding: var(--spacing-lg);
+}
+
+.person-name {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-dark-text);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.2;
+}
+
+.person-preview {
+  font-size: var(--font-size-sm);
+  color: var(--color-light-text);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.person-card-decoration {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 40px;
+  height: 40px;
+  opacity: 0.7;
+  transition: var(--transition-normal);
+  pointer-events: none;
+}
+
+.person-card:hover .person-card-decoration {
+  opacity: 1;
+  transform: rotate(15deg) scale(1.1);
+}
+
+/* Loading state for people grid */
+.people-grid.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.people-grid-placeholder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+.person-card-skeleton {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: skeleton-loading 1.5s ease-in-out infinite alternate;
+}
+
+.person-card-skeleton .skeleton-image {
+  width: 100%;
+  height: 250px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.person-card-skeleton .skeleton-content {
+  padding: var(--spacing-lg);
+}
+
+.person-card-skeleton .skeleton-title {
+  height: 24px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.person-card-skeleton .skeleton-text {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.person-card-skeleton .skeleton-text:last-child {
+  width: 70%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Error state for people grid */
+.people-grid-error {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-light-text);
+}
+
+.people-grid-error-icon {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.people-grid-error-message {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.people-grid-retry {
+  background: var(--color-primary-orange);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.people-grid-retry:hover {
+  background: var(--color-primary-blue);
+  transform: translateY(-2px);
+}
+
+/* Responsive design for people grid */
+@media (max-width: 768px) {
+  .people-grid,
+  .people-grid-placeholder {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .person-image-container {
+    height: 200px;
+  }
+  
+  .person-content {
+    padding: var(--spacing-md);
+  }
+  
+  .person-name {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .people-grid,
+  .people-grid-placeholder {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .people-grid,
+  .people-grid-placeholder {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===================================
    LOADING STATES
    =================================== */
 
@@ -3409,4 +4368,421 @@ ontent spacing */
     .global-message-success {
         border-color: var(--color-success);
     }
+}
+/* ===
+================================
+   INTERESANTI PEOPLE SECTION STYLES
+   =================================== */
+
+/* Interesanti People Section */
+.interesanti-people {
+  background: linear-gradient(135deg, var(--color-warm-white) 0%, var(--color-soft-gray) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* People Grid */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+/* Person Card */
+.person-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-normal);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.person-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-playful);
+}
+
+.person-card:focus {
+  outline: 3px solid var(--color-primary-yellow);
+  outline-offset: 2px;
+}
+
+/* Person Card Image */
+.person-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.person-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-normal);
+}
+
+.person-card:hover .person-card-image img {
+  transform: scale(1.05);
+}
+
+/* Person Card Content */
+.person-card-content {
+  padding: var(--spacing-lg);
+}
+
+.person-card-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-primary-orange);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.person-card-preview {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-light-text);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Person Card Footer */
+.person-card-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-soft-gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-light-text);
+}
+
+.person-card-meta {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.person-card-read-more {
+  color: var(--color-primary-blue);
+  font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.person-card-read-more:hover {
+  color: var(--color-primary-orange);
+}
+
+/* Loading states */
+.people-grid.loading {
+  opacity: 0.7;
+}
+
+.person-card.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error states */
+.people-grid.error {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-error);
+}
+
+.people-grid.error::before {
+  content: '⚠️ Nav iespējams ielādēt cilvēku datus';
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+}
+
+/* Empty state */
+.people-grid.empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-light-text);
+}
+
+.people-grid.empty::before {
+  content: 'Pagaidām nav pieejami cilvēku profili';
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .people-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+  }
+  
+  .person-card-image {
+    height: 180px;
+  }
+  
+  .person-card-content {
+    padding: var(--spacing-md);
+  }
+  
+  .person-card-title {
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .people-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .person-card-image {
+    height: 160px;
+  }
+  
+  .person-card-footer {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    align-items: flex-start;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .person-card,
+  .person-card-image img {
+    transition: none;
+  }
+  
+  .person-card:hover,
+  .person-card:hover .person-card-image img {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .person-card {
+    border: 2px solid #000;
+  }
+  
+  .person-card-title {
+    color: #000 !important;
+  }
+  
+  .person-card-preview {
+    color: #333 !important;
+  }
+}
+/* ======
+=============================
+   PEOPLE CARDS (INTERESANTI SECTION)
+   =================================== */
+
+/* People grid container */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+/* Text-only person cards */
+.person-card-text-only {
+  display: block;
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  border: 2px solid transparent;
+}
+
+.person-card-text-only:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-playful);
+  border-color: var(--color-primary-blue);
+}
+
+.person-card-text-only:focus {
+  outline: 3px solid var(--color-primary-orange);
+  outline-offset: 2px;
+}
+
+/* Person card content */
+.person-card-text-only .person-content {
+  position: relative;
+  z-index: 2;
+}
+
+.person-card-text-only .person-name {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary-blue);
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: 1.2;
+}
+
+.person-card-text-only .person-preview {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-dark-text);
+  margin: 0;
+}
+
+/* Decorative character in person cards */
+.person-card-text-only .person-card-decoration {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  opacity: 0.3;
+  transition: var(--transition-normal);
+  z-index: 1;
+}
+
+.person-card-text-only:hover .person-card-decoration {
+  opacity: 0.6;
+  transform: scale(1.1) rotate(10deg);
+}
+
+.person-card-text-only .decoration-character {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Loading and navigation states */
+.person-card-text-only.navigating {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Responsive design for person cards */
+@media (max-width: 768px) {
+  .people-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .person-card-text-only {
+    padding: var(--spacing-lg);
+    min-height: 150px;
+  }
+  
+  .person-card-text-only .person-name {
+    font-size: var(--font-size-lg);
+  }
+  
+  .person-card-text-only .person-preview {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .person-card-text-only {
+    padding: var(--spacing-md);
+    min-height: 120px;
+  }
+  
+  .person-card-text-only .person-name {
+    font-size: var(--font-size-base);
+  }
+  
+  .person-card-text-only .decoration-character {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Error and empty states for people grid */
+.people-grid-error {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--color-light-text);
+}
+
+.people-grid-error-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.people-grid-error-message {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-dark-text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.people-grid-error-description p {
+  margin-bottom: var(--spacing-md);
+}
+
+.people-grid-retry {
+  background: var(--color-primary-blue);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.people-grid-retry:hover {
+  background: var(--color-primary-orange);
+  transform: translateY(-2px);
+}
+
+.people-grid-retry .retry-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Loading state for people grid */
+.people-grid.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.people-grid.loading::before {
+  content: "Ielādē interesantos cilvēkus...";
+  font-family: var(--font-heading);
+  color: var(--color-light-text);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }

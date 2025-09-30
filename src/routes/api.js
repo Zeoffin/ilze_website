@@ -3,7 +3,15 @@ const { Content, ContactMessage } = require('../models');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const { validateContactForm, sanitizeInputs } = require('../middleware/validation');
+const { param, validationResult } = require('express-validator');
 const router = express.Router();
+
+// Import people services and models
+const peopleDataService = require('../services/PeopleDataService');
+const PeopleRepository = require('../models/PeopleRepository');
+
+// Initialize people repository
+const peopleRepository = new PeopleRepository(peopleDataService);
 
 // Rate limiting for contact form
 const contactLimiter = rateLimit({
@@ -25,6 +33,161 @@ const contactLimiter = rateLimit({
 
 // Apply input sanitization to all API routes
 router.use(sanitizeInputs);
+
+/**
+ * Middleware to ensure people repository is initialized
+ */
+const ensurePeopleInitialized = async (req, res, next) => {
+  try {
+    if (!peopleRepository.isReady()) {
+      await peopleRepository.initialize();
+    }
+    next();
+  } catch (error) {
+    console.error('Failed to initialize people repository:', error);
+    res.status(500).json({
+      error: 'Service unavailable',
+      message: 'Unable to load people data at this time',
+      timestamp: new Date().toISOString(),
+      requestId: req.id
+    });
+  }
+};
+
+/**
+ * Validation middleware for person slug parameter
+ */
+const validatePersonSlug = [
+  param('slug')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Person slug must be between 1 and 100 characters')
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Person slug must contain only lowercase letters, numbers, and hyphens')
+    .customSanitizer((value) => {
+      // Additional sanitization to prevent directory traversal
+      return value.replace(/[^a-z0-9-]/g, '').toLowerCase();
+    }),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'Invalid person slug',
+        details: errors.array().map(error => ({
+          field: error.path,
+          message: error.msg,
+          value: error.value
+        })),
+        timestamp: new Date().toISOString(),
+        requestId: req.id
+      });
+    }
+    next();
+  }
+];
+
+/**
+ * GET /api/people
+ * Get all people for the Interesanti section
+ */
+router.get('/people', ensurePeopleInitialized, async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    // Get all people for grid display
+    const people = peopleRepository.getAllForGrid();
+    const stats = peopleRepository.getStats();
+    
+    const duration = Date.now() - startTime;
+    
+    res.json({
+      success: true,
+      people: people,
+      meta: {
+        count: people.length,
+        stats: stats,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString(),
+        requestId: req.id
+      }
+    });
+    
+    console.log(`Served ${people.length} people in ${duration}ms`);
+    
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    
+    console.error('Error fetching people:', {
+      error: error.message,
+      duration: `${duration}ms`,
+      requestId: req.id,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch people data',
+      timestamp: new Date().toISOString(),
+      requestId: req.id
+    });
+  }
+});
+
+/**
+ * GET /api/people/:slug
+ * Get individual person data by slug
+ */
+router.get('/people/:slug', ensurePeopleInitialized, validatePersonSlug, async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { slug } = req.params;
+    
+    // Get person data from repository
+    const personData = peopleRepository.getForProfile(slug);
+    
+    if (!personData) {
+      return res.status(404).json({
+        error: 'Person not found',
+        message: 'The requested person profile does not exist',
+        timestamp: new Date().toISOString(),
+        requestId: req.id
+      });
+    }
+    
+    const duration = Date.now() - startTime;
+    
+    res.json({
+      success: true,
+      person: personData,
+      meta: {
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString(),
+        requestId: req.id
+      }
+    });
+    
+    console.log(`Served person data for ${personData.name} in ${duration}ms`);
+    
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    
+    console.error('Error fetching person:', {
+      error: error.message,
+      slug: req.params.slug,
+      duration: `${duration}ms`,
+      requestId: req.id,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch person data',
+      timestamp: new Date().toISOString(),
+      requestId: req.id
+    });
+  }
+});
 
 /**
  * GET /api/health

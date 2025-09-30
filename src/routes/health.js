@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { database } = require('../models');
+const peopleDataService = require('../services/PeopleDataService');
 const fs = require('fs').promises;
 const path = require('path');
 const config = require('../../config');
@@ -57,6 +58,38 @@ router.get('/', async (req, res) => {
         };
         checks.status = 'unhealthy';
       }
+    }
+
+    // People Data Service health check
+    try {
+      const peopleHealth = peopleDataService.getServiceHealth();
+      const peopleStats = peopleDataService.getStats();
+      
+      checks.checks.peopleService = {
+        status: peopleHealth.status === 'healthy' ? 'healthy' : 
+                peopleHealth.status === 'degraded' ? 'warning' : 'unhealthy',
+        initialized: peopleHealth.initialized,
+        dataLoaded: peopleHealth.dataLoaded,
+        peopleCount: peopleHealth.peopleCount,
+        issues: peopleHealth.issues,
+        message: peopleHealth.status === 'healthy' ? 
+                `${peopleHealth.peopleCount} people profiles loaded` :
+                `Service ${peopleHealth.status}: ${peopleHealth.issues.join(', ')}`
+      };
+      
+      // Mark overall health as degraded if people service has issues
+      if (peopleHealth.status === 'failed') {
+        checks.status = 'unhealthy';
+      } else if (peopleHealth.status === 'degraded' && checks.status === 'healthy') {
+        checks.status = 'degraded';
+      }
+    } catch (error) {
+      checks.checks.peopleService = {
+        status: 'unhealthy',
+        message: 'Failed to check people service health',
+        error: error.message
+      };
+      checks.status = 'unhealthy';
     }
 
     // Memory usage check
@@ -127,6 +160,110 @@ router.get('/live', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime())
   });
+});
+
+// People Data Service specific health check
+router.get('/people', async (req, res) => {
+  try {
+    const health = peopleDataService.getServiceHealth();
+    const stats = peopleDataService.getStats();
+    const initStatus = peopleDataService.getInitializationStatus();
+    
+    const response = {
+      timestamp: new Date().toISOString(),
+      service: 'People Data Service',
+      status: health.status,
+      initialized: health.initialized,
+      dataLoaded: health.dataLoaded,
+      ready: peopleDataService.isReady(),
+      stats: {
+        totalPeople: stats.totalPeople,
+        totalImages: stats.totalImages,
+        totalWords: stats.totalWords,
+        averageWordsPerPerson: stats.averageWordsPerPerson,
+        averageImagesPerPerson: stats.averageImagesPerPerson
+      },
+      health: {
+        peopleWithImages: health.peopleWithImages,
+        peopleWithContent: health.peopleWithContent,
+        averageContentLength: health.averageContentLength,
+        issues: health.issues,
+        lastChecked: health.lastChecked
+      },
+      directory: {
+        path: stats.directoryPath,
+        accessible: initStatus.directoryExists
+      }
+    };
+    
+    // Include degradation info if service is not fully healthy
+    if (health.status !== 'healthy') {
+      response.degradation = peopleDataService.handleGracefulDegradation('health-check');
+    }
+    
+    // Set appropriate status code
+    const statusCode = health.status === 'healthy' ? 200 : 
+                      health.status === 'degraded' ? 200 : 503;
+    
+    res.status(statusCode).json(response);
+    
+  } catch (error) {
+    console.error('People service health check error:', error);
+    res.status(503).json({
+      timestamp: new Date().toISOString(),
+      service: 'People Data Service',
+      status: 'error',
+      error: 'Health check failed',
+      message: error.message
+    });
+  }
+});
+
+// People service recovery endpoint (admin only)
+router.post('/people/recover', async (req, res) => {
+  // Simple authentication check - in production, use proper admin auth
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${config.security.session.secret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  try {
+    console.log('🔄 Manual recovery requested for People Data Service');
+    const recoveryStartTime = Date.now();
+    
+    const success = await peopleDataService.attemptRecovery();
+    const recoveryDuration = Date.now() - recoveryStartTime;
+    
+    const stats = peopleDataService.getStats();
+    const health = peopleDataService.getServiceHealth();
+    
+    res.json({
+      timestamp: new Date().toISOString(),
+      recovery: {
+        attempted: true,
+        successful: success,
+        duration: `${recoveryDuration}ms`
+      },
+      currentStatus: {
+        status: health.status,
+        initialized: health.initialized,
+        dataLoaded: health.dataLoaded,
+        peopleCount: stats.totalPeople,
+        issues: health.issues
+      }
+    });
+    
+  } catch (error) {
+    console.error('People service recovery error:', error);
+    res.status(500).json({
+      timestamp: new Date().toISOString(),
+      recovery: {
+        attempted: true,
+        successful: false,
+        error: error.message
+      }
+    });
+  }
 });
 
 // Detailed system information (admin only)

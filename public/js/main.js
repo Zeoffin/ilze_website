@@ -136,7 +136,7 @@ function initMobileMenu() {
 }
 
 /**
- * Initialize smooth scrolling for navigation links
+ * Initialize enhanced smooth scrolling for navigation links
  */
 function initSmoothScrolling() {
     const navLinks = document.querySelectorAll('a[href^="#"]');
@@ -152,13 +152,111 @@ function initSmoothScrolling() {
                 const headerHeight = document.getElementById('header').offsetHeight;
                 const targetPosition = targetElement.offsetTop - headerHeight - 20;
                 
-                window.scrollTo({
-                    top: targetPosition,
-                    behavior: 'smooth'
+                // Add visual feedback for navigation
+                this.classList.add('navigating');
+                
+                // Enhanced smooth scrolling with callback
+                smoothScrollToElement(targetElement, targetPosition, () => {
+                    // Remove navigation state
+                    this.classList.remove('navigating');
+                    
+                    // Special handling for Interesanti section
+                    if (targetId === '#interesanti') {
+                        handleInteresantiSectionFocus();
+                    }
+                    
+                    // Announce to screen readers
+                    if (typeof announceToScreenReader === 'function') {
+                        const sectionName = targetElement.querySelector('.section-title')?.textContent || 'sadaļa';
+                        announceToScreenReader(`Pārgājām uz ${sectionName} sadaļu`);
+                    }
                 });
             }
         });
     });
+}
+
+/**
+ * Enhanced smooth scroll function with callback support
+ * @param {HTMLElement} targetElement - Target element to scroll to
+ * @param {number} targetPosition - Target scroll position
+ * @param {Function} callback - Callback function to execute after scroll
+ */
+function smoothScrollToElement(targetElement, targetPosition, callback) {
+    const startPosition = window.pageYOffset;
+    const distance = targetPosition - startPosition;
+    const duration = Math.min(Math.abs(distance) / 2, 1000); // Max 1 second
+    let start = null;
+    
+    function animation(currentTime) {
+        if (start === null) start = currentTime;
+        const timeElapsed = currentTime - start;
+        const progress = Math.min(timeElapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const ease = easeInOutCubic(progress);
+        
+        window.scrollTo(0, startPosition + (distance * ease));
+        
+        if (progress < 1) {
+            requestAnimationFrame(animation);
+        } else {
+            // Scroll complete, execute callback
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        }
+    }
+    
+    requestAnimationFrame(animation);
+}
+
+/**
+ * Easing function for smooth animations
+ * @param {number} t - Progress (0 to 1)
+ * @returns {number} Eased value
+ */
+function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+}
+
+/**
+ * Handle special focus behavior for Interesanti section
+ */
+function handleInteresantiSectionFocus() {
+    const interesantiSection = document.getElementById('interesanti');
+    const peopleGrid = document.getElementById('people-grid');
+    
+    if (!interesantiSection || !peopleGrid) return;
+    
+    // Add focus highlight to section
+    interesantiSection.classList.add('section-focused');
+    
+    // Remove focus highlight after a delay
+    setTimeout(() => {
+        interesantiSection.classList.remove('section-focused');
+    }, 2000);
+    
+    // If people grid is empty, try to reload it
+    if (peopleGrid.children.length === 0 || peopleGrid.classList.contains('error')) {
+        console.log('People grid appears empty, attempting to reload...');
+        initializePeopleGrid();
+    }
+    
+    // Add subtle animation to people cards if they exist
+    const peopleCards = peopleGrid.querySelectorAll('.person-card');
+    if (peopleCards.length > 0) {
+        peopleCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.transform = 'scale(1.02)';
+                card.style.transition = 'transform 0.3s ease-out';
+                
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 300);
+            }, index * 50);
+        });
+    }
 }
 
 /**
@@ -628,6 +726,9 @@ function initInteresantiSection() {
     const authorImage = document.querySelector('.author-image');
     const decorationCharacters = document.querySelectorAll('.decoration-character, .decoration-character-2');
     const authorBio = document.querySelector('.author-bio');
+    
+    // Initialize people grid
+    initializePeopleGrid();
     
     // Load dynamic content from API
     loadInteresantiContent();
@@ -2373,3 +2474,604 @@ visibilityStyle.textContent = `
     }
 `;
 document.head.appendChild(visibilityStyle);
+
+// INTERESANTI PEOPLE SECTION
+// ===================================
+
+/**
+ * Initialize the Interesanti people section
+ */
+function initializeInteresantiSection() {
+    const peopleGrid = document.getElementById('people-grid');
+    if (!peopleGrid) return;
+
+    // Load people data and populate grid
+    loadPeopleData()
+        .then(people => {
+            if (people && people.length > 0) {
+                renderPeopleGrid(people, peopleGrid);
+            } else {
+                showEmptyState(peopleGrid);
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load people data:', error);
+            showErrorState(peopleGrid);
+        });
+}
+
+/**
+ * Load people data from the API
+ * @returns {Promise<Array>} Array of people data
+ */
+async function loadPeopleData() {
+    try {
+        const response = await fetch('/api/people');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.people || [];
+    } catch (error) {
+        console.error('Error loading people data:', error);
+        throw error;
+    }
+}
+
+/**
+ * Render the people grid
+ * @param {Array} people - Array of people data
+ * @param {HTMLElement} container - Container element
+ */
+function renderPeopleGrid(people, container) {
+    container.innerHTML = '';
+    container.classList.remove('loading', 'error', 'empty');
+
+    people.forEach(person => {
+        const personCard = createPersonCard(person);
+        container.appendChild(personCard);
+    });
+
+    // Initialize enhanced lazy loading for person images
+    initializePeopleImageLazyLoading(container);
+    
+    // Add intersection observer for card animations
+    initializePeopleCardAnimations(container);
+}
+
+/**
+ * Create a person card element
+ * @param {Object} person - Person data
+ * @returns {HTMLElement} Person card element
+ */
+function createPersonCard(person) {
+    const card = document.createElement('a');
+    card.className = 'person-card person-card-text-only';
+    card.href = `/interesanti/${person.slug}`;
+    card.setAttribute('data-person-id', person.id);
+    card.setAttribute('aria-label', `Apskatīt ${person.name} profilu`);
+
+    card.innerHTML = `
+        <div class="person-content">
+            <h3 class="person-name">${escapeHtml(person.name)}</h3>
+            <p class="person-preview">${escapeHtml(person.contentPreview || 'Uzziniet vairāk par šo interesanto cilvēku...')}</p>
+        </div>
+        <div class="person-card-decoration" aria-hidden="true">
+            <img data-src="/media/character.jpg" alt="" class="decoration-character lazy" loading="lazy" width="40" height="40" role="presentation">
+        </div>
+    `;
+
+    // Add click handler with enhanced navigation
+    card.addEventListener('click', (e) => {
+        // Allow default link behavior, but add enhanced functionality
+        console.log(`Navigating to ${person.name} profile`);
+        
+        // Add loading state to the clicked card
+        card.classList.add('navigating');
+        
+        // Announce navigation to screen readers
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader(`Pārejam uz ${person.name} profilu`);
+        }
+    });
+
+    // Add keyboard navigation support
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.click();
+        }
+    });
+
+    // Add hover effects for better interactivity
+    card.addEventListener('mouseenter', () => {
+        const decoration = card.querySelector('.decoration-character');
+        if (decoration) {
+            decoration.style.transform = 'scale(1.2) rotate(15deg)';
+            decoration.style.transition = 'transform 0.3s ease-out';
+        }
+    });
+
+    card.addEventListener('mouseleave', () => {
+        const decoration = card.querySelector('.decoration-character');
+        if (decoration) {
+            decoration.style.transform = '';
+        }
+    });
+
+    return card;
+}
+
+
+
+/**
+ * Show empty state
+ * @param {HTMLElement} container - Container element
+ */
+function showEmptyState(container) {
+    container.innerHTML = `
+        <div class="people-grid-error">
+            <div class="people-grid-error-icon">🤷‍♀️</div>
+            <div class="people-grid-error-message">Nav atrasti interesanti cilvēki</div>
+            <p>Šobrīd nav pieejami profili. Lūdzu, mēģiniet vēlāk.</p>
+        </div>
+    `;
+    container.classList.add('empty');
+    container.classList.remove('loading', 'error');
+}
+
+/**
+ * Show error state
+ * @param {HTMLElement} container - Container element
+ */
+function showErrorState(container) {
+    container.innerHTML = `
+        <div class="people-grid-error">
+            <div class="people-grid-error-icon">⚠️</div>
+            <div class="people-grid-error-message">Kļūda ielādējot saturu</div>
+            <div class="people-grid-error-description">
+                <p>Neizdevās ielādēt interesanto cilvēku profilus.</p>
+                <button class="people-grid-retry" id="people-grid-retry-btn">
+                    <span class="retry-icon">🔄</span>
+                    Mēģināt vēlreiz
+                </button>
+            </div>
+        </div>
+    `;
+    container.classList.add('error');
+    container.classList.remove('loading', 'empty');
+    
+    // Add retry functionality with proper event handling
+    const retryButton = container.querySelector('#people-grid-retry-btn');
+    if (retryButton) {
+        retryButton.addEventListener('click', async () => {
+            retryButton.disabled = true;
+            retryButton.innerHTML = '<span class="retry-icon spinning">🔄</span> Ielādē...';
+            
+            try {
+                await initializePeopleGrid();
+            } catch (error) {
+                console.error('Retry failed:', error);
+                retryButton.disabled = false;
+                retryButton.innerHTML = '<span class="retry-icon">🔄</span> Mēģināt vēlreiz';
+            }
+        });
+        
+        // Add keyboard support
+        retryButton.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                retryButton.click();
+            }
+        });
+    }
+}
+
+/**
+ * Initialize the people grid in the Interesanti section
+ */
+async function initializePeopleGrid() {
+    const peopleGrid = document.getElementById('people-grid');
+    
+    if (!peopleGrid) {
+        console.warn('People grid container not found');
+        return;
+    }
+
+    // Start performance monitoring
+    const perfMonitor = monitorPeopleGridPerformance();
+
+    try {
+        // Show loading state
+        showLoadingState(peopleGrid);
+        
+        // Load people data
+        const people = await loadPeopleData();
+        
+        if (people.length === 0) {
+            showEmptyState(peopleGrid);
+            if (perfMonitor) perfMonitor.end();
+            return;
+        }
+        
+        // Render people grid
+        renderPeopleGrid(people, peopleGrid);
+        
+        // End performance monitoring
+        if (perfMonitor) perfMonitor.end();
+        
+        // Announce to screen readers
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader(`Ielādēti ${people.length} interesanti cilvēki`);
+        }
+        
+    } catch (error) {
+        console.error('Error initializing people grid:', error);
+        showErrorState(peopleGrid);
+        if (perfMonitor) perfMonitor.end();
+    }
+}
+
+/**
+ * Show loading state with skeleton cards
+ * @param {HTMLElement} container - Container element
+ */
+function showLoadingState(container) {
+    container.innerHTML = '';
+    container.classList.add('loading');
+    container.classList.remove('error', 'empty');
+    
+    // Create skeleton cards
+    for (let i = 0; i < 6; i++) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'person-card-skeleton';
+        skeleton.innerHTML = `
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+        `;
+        container.appendChild(skeleton);
+    }
+}
+
+/**
+ * Initialize enhanced lazy loading for people images
+ * @param {HTMLElement} container - Container element
+ */
+function initializePeopleImageLazyLoading(container) {
+    const lazyImages = container.querySelectorAll('img[data-src]');
+    
+    if (!lazyImages.length) return;
+    
+    // Enhanced lazy loading with performance optimizations
+    const imageLoadObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                loadImageWithEnhancedFallback(img);
+                imageLoadObserver.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '50px 0px',
+        threshold: 0.01
+    });
+    
+    lazyImages.forEach(img => {
+        // Add loading placeholder
+        img.style.backgroundColor = '#f0f0f0';
+        img.style.backgroundImage = 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)';
+        img.style.backgroundSize = '200% 100%';
+        img.style.animation = 'loading 1.5s infinite';
+        
+        imageLoadObserver.observe(img);
+    });
+}
+
+/**
+ * Load image with enhanced fallback and error handling
+ * @param {HTMLImageElement} imgElement - Image element to load
+ */
+function loadImageWithEnhancedFallback(imgElement) {
+    const src = imgElement.dataset.src;
+    if (!src) return;
+    
+    // Create a new image for preloading
+    const img = new Image();
+    
+    img.onload = function() {
+        // Image loaded successfully
+        imgElement.src = src;
+        imgElement.classList.add('loaded');
+        imgElement.classList.remove('lazy');
+        
+        // Remove loading animation
+        imgElement.style.backgroundColor = '';
+        imgElement.style.backgroundImage = '';
+        imgElement.style.animation = '';
+        
+        // Add fade-in effect
+        imgElement.style.opacity = '0';
+        imgElement.style.transition = 'opacity 0.3s ease-in-out';
+        
+        requestAnimationFrame(() => {
+            imgElement.style.opacity = '1';
+        });
+    };
+    
+    img.onerror = function() {
+        // Image failed to load, use fallback
+        console.warn('Failed to load image:', src);
+        
+        // Try fallback image
+        const fallbackSrc = '/media/placeholder-person.jpg';
+        if (src !== fallbackSrc) {
+            imgElement.dataset.src = fallbackSrc;
+            loadImageWithEnhancedFallback(imgElement);
+        } else {
+            // Even fallback failed, show error state
+            imgElement.alt = 'Attēls nav pieejams';
+            imgElement.style.backgroundColor = '#f8f8f8';
+            imgElement.style.backgroundImage = 'none';
+            imgElement.style.animation = '';
+            imgElement.classList.add('error');
+        }
+    };
+    
+    // Start loading
+    img.src = src;
+    imgElement.removeAttribute('data-src');
+}
+
+/**
+ * Initialize card animations for people grid
+ * @param {HTMLElement} container - Container element
+ */
+function initializePeopleCardAnimations(container) {
+    const cards = container.querySelectorAll('.person-card');
+    
+    if (!cards.length) return;
+    
+    // Intersection observer for card animations
+    const cardAnimationObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                // Stagger animation for visual appeal
+                setTimeout(() => {
+                    entry.target.classList.add('animate-in');
+                    cardAnimationObserver.unobserve(entry.target);
+                }, index * 100);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    cards.forEach((card, index) => {
+        // Initially hide cards for animation
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+        
+        cardAnimationObserver.observe(card);
+    });
+    
+    // Add CSS for animate-in class
+    if (!document.getElementById('people-card-animations')) {
+        const style = document.createElement('style');
+        style.id = 'people-card-animations';
+        style.textContent = `
+            .person-card.animate-in {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
+            }
+            
+            .person-card.navigating {
+                transform: scale(0.98);
+                opacity: 0.8;
+                transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+            }
+            
+            .person-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            }
+            
+            .person-card:focus {
+                outline: 3px solid var(--color-primary-orange);
+                outline-offset: 2px;
+            }
+            
+            @keyframes loading {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+            
+            .person-image.loaded {
+                animation: none;
+            }
+            
+            .person-image.error {
+                background: #f8f8f8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .person-image.error::after {
+                content: '📷';
+                font-size: 2rem;
+                opacity: 0.5;
+            }
+            
+            /* Navigation feedback styles */
+            .nav-link.navigating {
+                opacity: 0.7;
+                transform: scale(0.98);
+                transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            }
+            
+            /* Section focus styles */
+            .section-focused {
+                position: relative;
+            }
+            
+            .section-focused::before {
+                content: '';
+                position: absolute;
+                top: -10px;
+                left: -10px;
+                right: -10px;
+                bottom: -10px;
+                border: 2px solid var(--color-primary-orange);
+                border-radius: 12px;
+                opacity: 0;
+                animation: sectionFocusAnimation 2s ease-out;
+                pointer-events: none;
+                z-index: 1;
+            }
+            
+            @keyframes sectionFocusAnimation {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                50% {
+                    opacity: 0.6;
+                    transform: scale(1.02);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+
+/**
+ * Performance monitoring for people grid
+ */
+function monitorPeopleGridPerformance() {
+    if (!window.performance || !window.performance.mark) return;
+    
+    // Mark performance points
+    performance.mark('people-grid-start');
+    
+    return {
+        end: () => {
+            performance.mark('people-grid-end');
+            performance.measure('people-grid-load', 'people-grid-start', 'people-grid-end');
+            
+            const measure = performance.getEntriesByName('people-grid-load')[0];
+            if (measure) {
+                console.log(`People grid loaded in ${measure.duration.toFixed(2)}ms`);
+                
+                // Log slow performance
+                if (measure.duration > 2000) {
+                    console.warn('People grid loading is slow:', measure.duration);
+                }
+            }
+        }
+    };
+}
+
+/**
+ * Add retry animation styles
+ */
+function addRetryAnimationStyles() {
+    if (document.getElementById('retry-animation-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'retry-animation-styles';
+    style.textContent = `
+        .people-grid-retry {
+            background: var(--color-primary-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: var(--font-size-sm);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem auto 0;
+            transition: var(--transition-normal);
+        }
+        
+        .people-grid-retry:hover:not(:disabled) {
+            background: var(--color-primary-orange);
+            transform: translateY(-2px);
+        }
+        
+        .people-grid-retry:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .retry-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .people-grid-error {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .people-grid-error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .people-grid-error-message {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--color-text-primary);
+        }
+        
+        .people-grid-error-description p {
+            margin-bottom: 1rem;
+            font-size: var(--font-size-base);
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// Initialize retry styles when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addRetryAnimationStyles);
+} else {
+    addRetryAnimationStyles();
+}

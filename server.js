@@ -4,6 +4,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { initializeDatabase } = require('./src/models');
+const peopleDataService = require('./src/services/PeopleDataService');
 require('dotenv').config();
 
 const app = express();
@@ -148,10 +149,12 @@ app.use('/admin/login', bruteForceProtection);
 const adminRoutes = require('./src/routes/admin');
 const apiRoutes = require('./src/routes/api');
 const healthRoutes = require('./src/routes/health');
+const peopleRoutes = require('./src/routes/people');
 
 app.use('/admin', adminRoutes);
 app.use('/api', apiRoutes);
 app.use('/health', healthRoutes);
+app.use('/interesanti', peopleRoutes);
 
 // Serve main page
 app.get('/', (req, res) => {
@@ -268,14 +271,126 @@ app.use((req, res) => {
 
 // Initialize database and start server
 const startServer = async () => {
+    const initStartTime = Date.now();
+    
     try {
+        console.log('Starting server initialization...');
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`Port: ${PORT}`);
+        
+        // Initialize database
+        console.log('Initializing database...');
         await initializeDatabase();
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-            console.log(`Visit http://localhost:${PORT} to view the website`);
+        console.log('Database initialized successfully');
+        
+        // Enhanced people data service status checking and logging
+        const initStatus = peopleDataService.getInitializationStatus();
+        const stats = peopleDataService.getStats();
+        
+        console.log('\n=== People Data Service Status ===');
+        console.log(`Initialized: ${initStatus.initialized}`);
+        console.log(`Directory exists: ${initStatus.directoryExists}`);
+        console.log(`Directory path: ${initStatus.directoryPath}`);
+        console.log(`Has data: ${initStatus.hasData}`);
+        console.log(`People count: ${initStatus.peopleCount}`);
+        console.log(`Service ready: ${initStatus.ready}`);
+        
+        if (stats.initialized && stats.hasData) {
+            console.log('\n✓ People data service initialized successfully');
+            console.log(`✓ Loaded ${stats.totalPeople} people profiles`);
+            console.log(`✓ Total images: ${stats.totalImages} (avg: ${stats.averageImagesPerPerson} per person)`);
+            console.log(`✓ Total words: ${stats.totalWords} (avg: ${stats.averageWordsPerPerson} per person)`);
+            
+            // Log individual people for verification
+            const allPeople = peopleDataService.getAllPeople();
+            console.log('\n--- Loaded People Profiles ---');
+            allPeople.forEach((person, index) => {
+                console.log(`${index + 1}. ${person.name} (${person.slug}) - ${person.images.length} images, ${person.metadata.wordCount} words`);
+            });
+        } else if (stats.initialized && !stats.hasData) {
+            console.warn('\n⚠ People data service initialized but no data loaded');
+            console.warn('⚠ Interesanti section will be empty');
+            console.warn('⚠ Check if people directory contains valid data');
+        } else {
+            console.error('\n✗ People data service failed to initialize properly');
+            console.error('✗ Interesanti section will not be available');
+            console.error('✗ Users will see an error message when accessing /interesanti routes');
+        }
+        
+        // Set up graceful degradation middleware for people routes
+        app.use('/interesanti', (req, res, next) => {
+            if (!peopleDataService.isReady()) {
+                console.warn(`Interesanti route accessed but service not ready: ${req.method} ${req.url}`);
+                
+                // For HTML requests, redirect to main page with error message
+                if (req.accepts('html') && !req.accepts('json')) {
+                    return res.redirect('/?error=interesanti-unavailable');
+                }
+                
+                // For API requests, return JSON error
+                return res.status(503).json({
+                    error: 'Service unavailable',
+                    message: 'The Interesanti section is temporarily unavailable',
+                    timestamp: new Date().toISOString(),
+                    code: 'PEOPLE_SERVICE_NOT_READY'
+                });
+            }
+            next();
         });
+        
+        const initDuration = Date.now() - initStartTime;
+        console.log(`\n=== Server Initialization Complete ===`);
+        console.log(`Total initialization time: ${initDuration}ms`);
+        
+        app.listen(PORT, () => {
+            console.log(`\n🚀 Server running on port ${PORT}`);
+            console.log(`📱 Visit http://localhost:${PORT} to view the website`);
+            
+            // Final status summary
+            const finalStats = peopleDataService.getStats();
+            if (finalStats.initialized && finalStats.hasData) {
+                console.log(`✅ Interesanti section ready with ${finalStats.totalPeople} people profiles`);
+            } else if (finalStats.initialized) {
+                console.log(`⚠️  Interesanti section available but empty (no people data loaded)`);
+            } else {
+                console.log(`❌ Interesanti section unavailable (initialization failed)`);
+            }
+            
+            console.log(`\n📊 Server Status:`);
+            console.log(`   - Database: ✅ Ready`);
+            console.log(`   - People Service: ${finalStats.initialized ? '✅' : '❌'} ${finalStats.initialized ? 'Ready' : 'Failed'}`);
+            console.log(`   - People Data: ${finalStats.hasData ? '✅' : '⚠️'} ${finalStats.hasData ? `${finalStats.totalPeople} profiles` : 'No data'}`);
+            console.log(`\n🎉 Server ready to accept connections!`);
+        });
+        
     } catch (error) {
-        console.error('Failed to start server:', error);
+        const initDuration = Date.now() - initStartTime;
+        console.error(`\n❌ Server initialization failed after ${initDuration}ms`);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Log specific guidance based on error type
+        if (error.message.includes('People directory')) {
+            console.error('\n💡 Troubleshooting: People directory issue');
+            console.error('   - Check if public/media/people directory exists');
+            console.error('   - Verify directory permissions are readable');
+            console.error('   - Ensure people subdirectories contain .html files');
+        } else if (error.message.includes('database') || error.message.includes('SQLITE')) {
+            console.error('\n💡 Troubleshooting: Database issue');
+            console.error('   - Check if database file is accessible');
+            console.error('   - Verify database permissions');
+            console.error('   - Check disk space');
+        } else {
+            console.error('\n💡 Troubleshooting: General server issue');
+            console.error('   - Check environment variables');
+            console.error('   - Verify all dependencies are installed');
+            console.error('   - Check file permissions');
+        }
+        
+        console.error('\n🛑 Server startup aborted');
         process.exit(1);
     }
 };

@@ -28,7 +28,8 @@
     "health": "curl -f http://localhost:3000/health || exit 1",
     "railway:predeploy": "node scripts/railway-deploy.js",
     "railway:postdeploy": "node scripts/railway-postdeploy.js",
-    "railway:test": "node scripts/test-railway-deployment.js"
+    "railway:test": "node scripts/test-railway-deployment.js",
+    "generate:credentials": "node scripts/generate-credentials.js"
   },
   "keywords": [
     "website",
@@ -40,6 +41,7 @@
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cheerio": "^1.1.2",
     "cors": "^2.8.5",
     "dompurify": "^3.0.5",
     "dotenv": "^16.3.1",
@@ -51,7 +53,6 @@
     "jsdom": "^23.0.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.7",
-
     "sqlite3": "^5.1.6",
     "validator": "^13.11.0"
   },

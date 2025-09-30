@@ -87,21 +87,45 @@ class Database {
   async createDefaultAdmin() {
     const existingAdmin = await this.get('SELECT id FROM admin_users LIMIT 1');
     if (!existingAdmin) {
-      const defaultPassword = 'admin123'; // Should be changed in production
-      const passwordHash = await bcrypt.hash(defaultPassword, 10);
-      
+      // Use environment variables for admin credentials
+      const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+      const adminPassword = process.env.ADMIN_PASSWORD || this.generateSecurePassword();
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+
+      const passwordHash = await bcrypt.hash(adminPassword, 12);
+
       await this.run(
         'INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)',
-        ['admin', passwordHash, 'admin@example.com']
+        [adminUsername, passwordHash, adminEmail]
       );
-      console.log('Default admin user created (username: admin, password: admin123)');
+
+      // Log different messages based on environment
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`Admin user created: ${adminUsername}`);
+        if (!process.env.ADMIN_PASSWORD) {
+          console.log('⚠️  IMPORTANT: No ADMIN_PASSWORD set. Generated password:', adminPassword);
+          console.log('⚠️  Please save this password and set ADMIN_PASSWORD environment variable');
+        }
+      } else {
+        console.log(`Default admin user created (username: ${adminUsername}, password: ${adminPassword})`);
+      }
     }
+  }
+
+  // Generate a secure random password
+  generateSecurePassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+    let password = '';
+    for (let i = 0; i < 16; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   }
 
   // Wrapper for database.run with Promise
   run(sql, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function(err) {
+      this.db.run(sql, params, function (err) {
         if (err) {
           reject(err);
         } else {
