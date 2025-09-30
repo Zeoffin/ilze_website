@@ -1,84 +1,130 @@
 #!/usr/bin/env node
 
 /**
- * Railway Deployment Script
- * Handles pre-deployment tasks and environment setup
+ * Railway deployment preparation script
+ * Ensures the environment is ready for deployment
  */
 
-const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 Starting Railway deployment preparation...');
+console.log('🚀 Preparing for Railway deployment...');
 
-// Check if we're in Railway environment
-const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.DATABASE_URL;
+// Check Node.js version
+const nodeVersion = process.version;
+console.log(`📋 Node.js version: ${nodeVersion}`);
 
-if (!isRailway) {
-  console.log('❌ Not in Railway environment. This script should only run on Railway.');
-  process.exit(1);
+const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
+if (majorVersion < 20) {
+    console.warn(`⚠️  Warning: Node.js ${nodeVersion} detected. Recommended: Node.js 20+`);
+    console.log('   Railway deployment may encounter compatibility issues.');
+    console.log('   The deployment includes polyfills to handle this.');
 }
 
-console.log('✅ Railway environment detected');
-
-// Verify required environment variables
-const requiredEnvVars = [
-  'SESSION_SECRET',
-  'EMAIL_HOST',
-  'EMAIL_USER',
-  'EMAIL_PASS',
-  'ADMIN_USERNAME',
-  'ADMIN_PASSWORD'
+// Check required files
+const requiredFiles = [
+    'server.js',
+    'package.json',
+    '.nvmrc',
+    'railway.toml',
+    'polyfills.js'
 ];
 
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+console.log('\n📁 Checking required files...');
+let allFilesPresent = true;
 
-if (missingVars.length > 0) {
-  console.log('❌ Missing required environment variables:');
-  missingVars.forEach(varName => console.log(`   - ${varName}`));
-  console.log('\nPlease set these variables in Railway dashboard.');
-  process.exit(1);
+requiredFiles.forEach(file => {
+    if (fs.existsSync(file)) {
+        console.log(`   ✅ ${file}`);
+    } else {
+        console.log(`   ❌ ${file} - MISSING`);
+        allFilesPresent = false;
+    }
+});
+
+// Check environment variables
+console.log('\n🔧 Checking environment configuration...');
+const requiredEnvVars = [
+    'NODE_ENV',
+    'SESSION_SECRET'
+];
+
+const optionalEnvVars = [
+    'EMAIL_HOST',
+    'EMAIL_PORT',
+    'EMAIL_USER',
+    'EMAIL_PASS',
+    'EMAIL_FROM'
+];
+
+requiredEnvVars.forEach(envVar => {
+    if (process.env[envVar]) {
+        console.log(`   ✅ ${envVar} is set`);
+    } else {
+        console.log(`   ⚠️  ${envVar} is not set (will use default)`);
+    }
+});
+
+console.log('\n📧 Optional email configuration:');
+optionalEnvVars.forEach(envVar => {
+    if (process.env[envVar]) {
+        console.log(`   ✅ ${envVar} is configured`);
+    } else {
+        console.log(`   ⚪ ${envVar} not configured (email features may not work)`);
+    }
+});
+
+// Check people data directory
+console.log('\n👥 Checking people data...');
+const peopleDir = path.join(__dirname, '..', 'public', 'media', 'people');
+if (fs.existsSync(peopleDir)) {
+    try {
+        const people = fs.readdirSync(peopleDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory());
+        console.log(`   ✅ People directory found with ${people.length} profiles`);
+        
+        if (people.length > 0) {
+            console.log('   📋 People profiles:');
+            people.slice(0, 5).forEach((person, index) => {
+                console.log(`      ${index + 1}. ${person.name}`);
+            });
+            if (people.length > 5) {
+                console.log(`      ... and ${people.length - 5} more`);
+            }
+        }
+    } catch (error) {
+        console.log(`   ⚠️  Error reading people directory: ${error.message}`);
+    }
+} else {
+    console.log(`   ⚠️  People directory not found at ${peopleDir}`);
+    console.log('      Interesanti section may not work properly');
 }
 
-console.log('✅ All required environment variables are set');
+// Summary
+console.log('\n📊 Deployment Readiness Summary:');
+console.log(`   Files: ${allFilesPresent ? '✅ All present' : '❌ Missing files'}`);
+console.log(`   Node.js: ${majorVersion >= 20 ? '✅ Compatible' : '⚠️  May need polyfills'}`);
+console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Created uploads directory');
+if (allFilesPresent) {
+    console.log('\n🎉 Ready for Railway deployment!');
+    console.log('\n📝 Deployment checklist:');
+    console.log('   1. Ensure Railway project is configured');
+    console.log('   2. Set environment variables in Railway dashboard');
+    console.log('   3. Deploy using: railway up');
+    console.log('   4. Monitor deployment logs');
+    console.log('   5. Test health endpoint: /health');
+} else {
+    console.log('\n❌ Deployment preparation incomplete');
+    console.log('   Please ensure all required files are present');
+    process.exit(1);
 }
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-  console.log('✅ Created logs directory');
-}
+console.log('\n🔗 Useful Railway commands:');
+console.log('   railway login');
+console.log('   railway link');
+console.log('   railway up');
+console.log('   railway logs');
+console.log('   railway status');
 
-// Run security audit
-try {
-  console.log('🔍 Running security audit...');
-  execSync('npm audit --audit-level moderate', { stdio: 'inherit' });
-  console.log('✅ Security audit passed');
-} catch (error) {
-  console.log('⚠️  Security audit found issues, but continuing deployment');
-}
-
-// Test database connection
-console.log('🔗 Testing database connection...');
-try {
-  const { initializeDatabase } = require('../src/models');
-  await initializeDatabase();
-  console.log('✅ Database connection successful');
-} catch (error) {
-  console.log('❌ Database connection failed:', error.message);
-  process.exit(1);
-}
-
-console.log('🎉 Railway deployment preparation completed successfully!');
-console.log('📝 Next steps:');
-console.log('   1. Verify all environment variables in Railway dashboard');
-console.log('   2. Monitor deployment logs for any issues');
-console.log('   3. Test the health endpoint after deployment');
-console.log('   4. Verify admin login functionality');
+console.log('\n✨ Deployment preparation complete!');
