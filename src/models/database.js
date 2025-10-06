@@ -59,6 +59,18 @@ class Database {
         message TEXT NOT NULL,
         submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         status TEXT DEFAULT 'sent' CHECK(status IN ('sent', 'failed'))
+      )`,
+
+      // People content table for managing Interesanti people content
+      `CREATE TABLE IF NOT EXISTS people_content (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        person_slug TEXT UNIQUE NOT NULL,
+        person_name TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT,
+        FOREIGN KEY (updated_by) REFERENCES admin_users(username)
       )`
     ];
 
@@ -66,7 +78,9 @@ class Database {
       'CREATE INDEX IF NOT EXISTS idx_content_section ON content(section)',
       'CREATE INDEX IF NOT EXISTS idx_content_order ON content(section, order_index)',
       'CREATE INDEX IF NOT EXISTS idx_admin_username ON admin_users(username)',
-      'CREATE INDEX IF NOT EXISTS idx_contact_submitted ON contact_messages(submitted_at)'
+      'CREATE INDEX IF NOT EXISTS idx_contact_submitted ON contact_messages(submitted_at)',
+      'CREATE INDEX IF NOT EXISTS idx_people_content_slug ON people_content(person_slug)',
+      'CREATE INDEX IF NOT EXISTS idx_people_content_updated ON people_content(updated_at)'
     ];
 
     // Create tables

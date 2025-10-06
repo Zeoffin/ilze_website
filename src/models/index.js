@@ -3,14 +3,17 @@ const Content = require('./Content');
 const AdminUser = require('./AdminUser');
 const ContactMessage = require('./ContactMessage');
 const Person = require('./Person');
+const PeopleContent = require('./PeopleContent');
 const PeopleRepository = require('./PeopleRepository');
+const PeopleContentRepository = require('./PeopleContentRepository');
 const peopleDataService = require('../services/PeopleDataService');
 
 // Initialize database when models are imported
 let initialized = false;
 
-// Create people repository instance
+// Create people repository instances
 const peopleRepository = new PeopleRepository(peopleDataService);
+const peopleContentRepository = new PeopleContentRepository();
 
 const initializeDatabase = async () => {
   if (!initialized) {
@@ -135,8 +138,11 @@ module.exports = {
   AdminUser,
   ContactMessage,
   Person,
+  PeopleContent,
   PeopleRepository,
+  PeopleContentRepository,
   peopleDataService,
   peopleRepository,
+  peopleContentRepository,
   initializeDatabase
 };

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="lv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Management - Admin Panel</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin-people.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Open+Sans:wght@300;400;600&family=Comfortaa:wght@300;400;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="admin-dashboard-body">
+    <div class="admin-dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-header-left">
+                    <nav class="admin-breadcrumb">
+                        <a href="/admin/dashboard" class="breadcrumb-link">
+                            <svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                            </svg>
+                            Dashboard
+                        </a>
+                        <span class="breadcrumb-separator">></span>
+                        <span class="breadcrumb-current">Interesanti People</span>
+                    </nav>
+                    <h1 class="admin-title">Interesanti People Management</h1>
+                    <p class="admin-subtitle">Edit biographical content for people in the Interesanti section</p>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-user-info">
+                        <span class="admin-username" id="adminUsername">Loading...</span>
+                        <div class="admin-user-menu">
+                            <button class="admin-user-button" id="userMenuButton" aria-expanded="false"
+                                aria-haspopup="true">
+                                <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="6,9 12,15 18,9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="admin-user-dropdown" id="userDropdown">
+                                <button class="dropdown-item logout-button" id="logoutButton">
+                                    <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                        <polyline points="16,17 21,12 16,7"></polyline>
+                                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                                    </svg>
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-content">
+                <!-- People Management Section -->
+                <section class="people-management-section">
+                    <div class="people-management-header">
+                        <div class="section-info">
+                            <h2 class="section-title">People Profiles</h2>
+                            <p class="section-description">Manage biographical content for each person in the Interesanti section</p>
+                        </div>
+                        <div class="section-stats" id="sectionStats">
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalPeople">-</span>
+                                <span class="stat-label">Total People</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="lastUpdated">-</span>
+                                <span class="stat-label">Last Updated</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div class="loading-state" id="loadingState">
+                        <div class="loading-spinner">
+                            <svg class="spinner" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                                    <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416"
+                                        repeatCount="indefinite" />
+                                    <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416"
+                                        repeatCount="indefinite" />
+                                </circle>
+                            </svg>
+                            <p class="loading-text">Loading people profiles...</p>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div class="error-state" id="errorState" style="display: none;">
+                        <div class="error-content">
+                            <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            <h3 class="error-title">Failed to Load People</h3>
+                            <p class="error-message" id="errorMessage">Unable to load people profiles. Please try again.</p>
+                            <button class="retry-button" id="retryButton">
+                                <svg class="retry-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23,4 23,10 17,10"></polyline>
+                                    <polyline points="1,20 1,14 7,14"></polyline>
+                                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                                </svg>
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-content">
+                            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <h3 class="empty-title">No People Found</h3>
+                            <p class="empty-message">No people profiles are available to manage at this time.</p>
+                        </div>
+                    </div>
+
+                    <!-- People Grid -->
+                    <div class="people-grid" id="peopleGrid" style="display: none;">
+                        <!-- People cards will be dynamically inserted here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="admin-footer">
+            <div class="admin-footer-content">
+                <p>&copy; 2024 Ilze Skrastiņa Website Admin Panel</p>
+                <div class="footer-links">
+                    <a href="/" target="_blank" rel="noopener">View Website</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                    <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416"
+                        repeatCount="indefinite" />
+                    <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416"
+                        repeatCount="indefinite" />
+                </circle>
+            </svg>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Session Timeout Warning Modal -->
+    <div class="modal-overlay" id="sessionWarningModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Session Expiring Soon</h3>
+            </div>
+            <div class="modal-body">
+                <p>Your session will expire in <span id="warningCountdown">5</span> minutes. Would you like to extend
+                    your session?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="button-secondary" id="extendSessionButton">Extend Session</button>
+                <button class="button-primary" id="logoutNowButton">Logout Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin-utils.js"></script>
+    <script src="/js/admin-people.js"></script>
+</body>
+
+</html>

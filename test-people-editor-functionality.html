@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Editor Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .stats {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>People Editor JavaScript Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Character and Word Count</h2>
+        <textarea id="testTextarea" placeholder="Type some text to test character and word counting..."></textarea>
+        <div class="stats">
+            Characters: <span id="charCount">0</span> | Words: <span id="wordCount">0</span>
+        </div>
+        <div id="test1Result" class="test-result test-info">Type in the textarea above to test real-time counting</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Content Validation</h2>
+        <button onclick="testValidation('')">Test Empty Content</button>
+        <button onclick="testValidation('Short')">Test Short Content</button>
+        <button onclick="testValidation('This is a valid content that is long enough to pass validation requirements.')">Test Valid Content</button>
+        <div id="test2Result" class="test-result test-info">Click buttons above to test validation</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Unsaved Changes Detection</h2>
+        <textarea id="changeTestTextarea" placeholder="Original content">Original content</textarea>
+        <div>Has unsaved changes: <span id="unsavedStatus">false</span></div>
+        <button onclick="resetContent()">Reset to Original</button>
+        <div id="test3Result" class="test-result test-info">Modify the textarea above to test change detection</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Draft Saving (LocalStorage)</h2>
+        <button onclick="testDraftSave()">Save Draft</button>
+        <button onclick="testDraftRestore()">Restore Draft</button>
+        <button onclick="testDraftClear()">Clear Draft</button>
+        <div id="test4Result" class="test-result test-info">Click buttons above to test draft functionality</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Keyboard Shortcuts</h2>
+        <div class="test-info">
+            <p>Test these keyboard shortcuts:</p>
+            <ul>
+                <li><strong>Ctrl+S / Cmd+S:</strong> Should trigger save (will show alert in this test)</li>
+                <li><strong>Ctrl+Z / Cmd+Z:</strong> Should revert changes</li>
+                <li><strong>Escape:</strong> Should show unsaved changes warning if content is modified</li>
+            </ul>
+        </div>
+        <textarea id="shortcutTestTextarea" placeholder="Focus here and test keyboard shortcuts">Test content for shortcuts</textarea>
+        <div id="test5Result" class="test-result test-info">Focus the textarea above and test keyboard shortcuts</div>
+    </div>
+
+    <script>
+        // Mock the PeopleContentEditor class for testing
+        class TestPeopleContentEditor {
+            constructor() {
+                this.originalContent = 'Original content';
+                this.currentContent = 'Original content';
+                this.hasUnsavedChanges = false;
+                this.personSlug = 'test-person';
+                
+                this.setupTests();
+            }
+
+            setupTests() {
+                // Test 1: Character and word counting
+                const testTextarea = document.getElementById('testTextarea');
+                testTextarea.addEventListener('input', (e) => {
+                    this.updateContentStats(e.target.value);
+                });
+
+                // Test 3: Unsaved changes detection
+                const changeTestTextarea = document.getElementById('changeTestTextarea');
+                changeTestTextarea.addEventListener('input', (e) => {
+                    this.testChangeDetection(e.target.value);
+                });
+
+                // Test 5: Keyboard shortcuts
+                const shortcutTestTextarea = document.getElementById('shortcutTestTextarea');
+                shortcutTestTextarea.addEventListener('keydown', (e) => {
+                    this.handleKeyboardShortcuts(e);
+                });
+            }
+
+            updateContentStats(content) {
+                const characterCount = content.length;
+                const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+
+                document.getElementById('charCount').textContent = characterCount.toLocaleString();
+                document.getElementById('wordCount').textContent = wordCount.toLocaleString();
+
+                const result = document.getElementById('test1Result');
+                result.className = 'test-result test-pass';
+                result.textContent = `✓ Real-time counting works! Characters: ${characterCount}, Words: ${wordCount}`;
+            }
+
+            validateContent(content) {
+                const trimmedContent = content.trim();
+                
+                if (trimmedContent.length === 0) {
+                    return { valid: false, message: 'Content cannot be empty' };
+                }
+                
+                if (trimmedContent.length < 10) {
+                    return { valid: false, message: 'Content must be at least 10 characters long' };
+                }
+
+                return { valid: true, message: 'Content is valid' };
+            }
+
+            testChangeDetection(content) {
+                this.currentContent = content;
+                this.hasUnsavedChanges = content !== this.originalContent;
+                
+                document.getElementById('unsavedStatus').textContent = this.hasUnsavedChanges;
+                
+                const result = document.getElementById('test3Result');
+                if (this.hasUnsavedChanges) {
+                    result.className = 'test-result test-pass';
+                    result.textContent = '✓ Unsaved changes detected correctly!';
+                } else {
+                    result.className = 'test-result test-info';
+                    result.textContent = 'No unsaved changes detected';
+                }
+            }
+
+            saveDraft() {
+                try {
+                    localStorage.setItem('peopleEditor_draft', JSON.stringify({
+                        slug: this.personSlug,
+                        content: this.currentContent,
+                        timestamp: Date.now()
+                    }));
+                    return true;
+                } catch (error) {
+                    console.error('Failed to save draft:', error);
+                    return false;
+                }
+            }
+
+            restoreDraft() {
+                try {
+                    const savedContent = localStorage.getItem('peopleEditor_draft');
+                    if (savedContent) {
+                        const data = JSON.parse(savedContent);
+                        if (data.slug === this.personSlug) {
+                            return data.content;
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Failed to restore draft:', error);
+                    return null;
+                }
+            }
+
+            clearDraft() {
+                localStorage.removeItem('peopleEditor_draft');
+            }
+
+            handleKeyboardShortcuts(event) {
+                let shortcutDetected = '';
+
+                // Ctrl+S or Cmd+S to save
+                if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                    event.preventDefault();
+                    shortcutDetected = 'Save shortcut (Ctrl/Cmd+S)';
+                    alert('Save shortcut detected! In real editor, this would save the content.');
+                }
+                
+                // Ctrl+Z or Cmd+Z to revert
+                if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+                    event.preventDefault();
+                    shortcutDetected = 'Revert shortcut (Ctrl/Cmd+Z)';
+                    event.target.value = 'Test content for shortcuts'; // Reset to original
+                }
+
+                // Escape key
+                if (event.key === 'Escape') {
+                    shortcutDetected = 'Escape key';
+                    if (event.target.value !== 'Test content for shortcuts') {
+                        alert('Escape detected with unsaved changes! In real editor, this would show unsaved changes warning.');
+                    }
+                }
+
+                if (shortcutDetected) {
+                    const result = document.getElementById('test5Result');
+                    result.className = 'test-result test-pass';
+                    result.textContent = `✓ ${shortcutDetected} detected and handled correctly!`;
+                }
+            }
+        }
+
+        // Initialize test editor
+        const testEditor = new TestPeopleContentEditor();
+
+        // Test functions
+        function testValidation(content) {
+            const result = testEditor.validateContent(content);
+            const resultDiv = document.getElementById('test2Result');
+            
+            if (result.valid) {
+                resultDiv.className = 'test-result test-pass';
+                resultDiv.textContent = `✓ ${result.message}`;
+            } else {
+                resultDiv.className = 'test-result test-fail';
+                resultDiv.textContent = `✗ ${result.message}`;
+            }
+        }
+
+        function resetContent() {
+            const textarea = document.getElementById('changeTestTextarea');
+            textarea.value = 'Original content';
+            testEditor.testChangeDetection('Original content');
+        }
+
+        function testDraftSave() {
+            testEditor.currentContent = 'This is a test draft content';
+            const success = testEditor.saveDraft();
+            const result = document.getElementById('test4Result');
+            
+            if (success) {
+                result.className = 'test-result test-pass';
+                result.textContent = '✓ Draft saved successfully to localStorage!';
+            } else {
+                result.className = 'test-result test-fail';
+                result.textContent = '✗ Failed to save draft';
+            }
+        }
+
+        function testDraftRestore() {
+            const restoredContent = testEditor.restoreDraft();
+            const result = document.getElementById('test4Result');
+            
+            if (restoredContent) {
+                result.className = 'test-result test-pass';
+                result.textContent = `✓ Draft restored: "${restoredContent}"`;
+            } else {
+                result.className = 'test-result test-info';
+                result.textContent = 'No draft found to restore (save a draft first)';
+            }
+        }
+
+        function testDraftClear() {
+            testEditor.clearDraft();
+            const result = document.getElementById('test4Result');
+            result.className = 'test-result test-pass';
+            result.textContent = '✓ Draft cleared from localStorage!';
+        }
+
+        // Show initial test status
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('People Editor Functionality Test loaded successfully');
+        });
+    </script>
+</body>
+</html>
+</html>

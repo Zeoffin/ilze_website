@@ -225,6 +225,55 @@ const validateFilename = [
 ];
 
 /**
+ * People slug validation
+ */
+const validatePersonSlug = [
+  param('slug')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Person slug must be between 1 and 100 characters')
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Person slug must contain only lowercase letters, numbers, and hyphens')
+    .customSanitizer((value) => {
+      // Additional sanitization to prevent directory traversal
+      return value.replace(/[^a-z0-9-]/g, '').toLowerCase();
+    }),
+  
+  handleValidationErrors
+];
+
+/**
+ * People content validation for updates
+ */
+const validatePeopleContent = [
+  body('content')
+    .trim()
+    .isLength({ min: 10, max: 50000 })
+    .withMessage('Content must be between 10 and 50,000 characters')
+    .custom((value) => {
+      // Check for empty content (including common empty HTML patterns)
+      const isEmpty = !value || 
+                     value === '<br>' || 
+                     value === '<div><br></div>' ||
+                     value === '<p><br></p>' ||
+                     value === '<p></p>' ||
+                     value.replace(/<[^>]*>/g, '').trim().length === 0;
+      
+      if (isEmpty) {
+        throw new Error('Content cannot be empty');
+      }
+      
+      return true;
+    })
+    .customSanitizer((value) => {
+      // Preserve content as-is for people content (it's plain text, not HTML)
+      return value.trim();
+    }),
+  
+  handleValidationErrors
+];
+
+/**
  * General input sanitization middleware
  */
 const sanitizeInputs = (req, res, next) => {
@@ -271,5 +320,7 @@ module.exports = {
   validateContent,
   validateFileUpload,
   validateFilename,
+  validatePersonSlug,
+  validatePeopleContent,
   sanitizeInputs
 };

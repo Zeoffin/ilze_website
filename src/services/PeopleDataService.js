@@ -1,12 +1,15 @@
 const fs = require('fs').promises;
 const path = require('path');
 const cheerio = require('cheerio');
+const PeopleContentRepository = require('../models/PeopleContentRepository');
 
 class PeopleDataService {
   constructor() {
     this.peopleDirectory = path.join(__dirname, '../../public/media/people');
     this.initialized = false;
     this.people = new Map();
+    this.repository = new PeopleContentRepository();
+    this.databaseMigrated = false;
   }
 
   /**
@@ -50,6 +53,10 @@ class PeopleDataService {
       }
 
       const results = await this.scanPeopleDirectory();
+      
+      // Check if database migration is needed and perform it
+      await this.performDatabaseMigration();
+      
       this.initialized = true;
 
       const duration = Date.now() - startTime;
@@ -732,6 +739,111 @@ class PeopleDataService {
   }
 
   /**
+   * Get all people data prioritizing database content
+   * @returns {Promise<Array>} Array of all person objects with database content when available
+   */
+  async getAllPeopleWithDatabase() {
+    try {
+      // Check if database migration has been completed
+      if (!this.databaseMigrated) {
+        console.log('Database not migrated, returning file-based content');
+        return this.getAllPeople();
+      }
+
+      // Get all people content from database
+      const dbPeople = await this.repository.getAll();
+      
+      if (dbPeople.length === 0) {
+        console.log('No people found in database, returning file-based content');
+        return this.getAllPeople();
+      }
+
+      // Merge database content with file-based images and metadata
+      const mergedPeople = [];
+      
+      for (const dbPerson of dbPeople) {
+        const filePerson = this.getPersonBySlug(dbPerson.personSlug);
+        
+        if (filePerson) {
+          // Merge database content with file data
+          mergedPeople.push({
+            ...filePerson,
+            content: {
+              html: this.processTextToHtml(dbPerson.content),
+              text: dbPerson.content,
+              lastUpdated: dbPerson.updatedAt,
+              updatedBy: dbPerson.updatedBy,
+              source: 'database'
+            },
+            metadata: {
+              ...filePerson.metadata,
+              lastModified: new Date(dbPerson.updatedAt),
+              wordCount: dbPerson.content.split(' ').filter(word => word.length > 0).length,
+              contentLength: dbPerson.content.length,
+              source: 'database'
+            }
+          });
+        } else {
+          // Create person object with database content only (no images from files)
+          mergedPeople.push({
+            id: dbPerson.personSlug,
+            name: dbPerson.personName,
+            slug: dbPerson.personSlug,
+            content: {
+              html: this.processTextToHtml(dbPerson.content),
+              text: dbPerson.content,
+              lastUpdated: dbPerson.updatedAt,
+              updatedBy: dbPerson.updatedBy,
+              source: 'database'
+            },
+            images: [],
+            metadata: {
+              lastModified: new Date(dbPerson.updatedAt),
+              wordCount: dbPerson.content.split(' ').filter(word => word.length > 0).length,
+              imageCount: 0,
+              hasContent: true,
+              contentLength: dbPerson.content.length,
+              source: 'database'
+            }
+          });
+        }
+      }
+
+      console.log(`✅ Returned ${mergedPeople.length} people with database content`);
+      return mergedPeople;
+    } catch (error) {
+      console.error('Error getting people from database:', error);
+      console.log('Falling back to file-based content');
+      return this.getAllPeople();
+    }
+  }
+
+  /**
+   * Process plain text to HTML (basic conversion)
+   * @param {string} text - Plain text content
+   * @returns {string} HTML content
+   */
+  processTextToHtml(text) {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
+
+    // Basic text to HTML conversion
+    // Split by double newlines for paragraphs
+    const paragraphs = text.split(/\n\s*\n/);
+    
+    const htmlParagraphs = paragraphs
+      .filter(p => p.trim().length > 0)
+      .map(paragraph => {
+        // Replace single newlines with <br> within paragraphs
+        const processedParagraph = paragraph.trim().replace(/\n/g, '<br>');
+        return `<p>${processedParagraph}</p>`;
+      });
+
+    return htmlParagraphs.join('\n');
+  }
+
+  /**
    * Get person by slug
    * @param {string} slug - Person's slug
    * @returns {Object|null} Person object or null if not found
@@ -995,6 +1107,189 @@ class PeopleDataService {
       console.error('❌ Recovery failed:', error.message);
       return false;
     }
+  }
+
+  /**
+   * Check if database migration has been completed
+   * @returns {Promise<boolean>} True if migration has been completed
+   */
+  async isDatabaseMigrated() {
+    try {
+      return await this.repository.isDatabaseMigrated();
+    } catch (error) {
+      console.error('Error checking database migration status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Migrate people content from files to database
+   * This method imports content from file-based data into the database
+   * @returns {Promise<Object>} Migration results with success/failure counts
+   */
+  async migrateFromFiles() {
+    console.log('🔄 Starting migration from files to database...');
+
+    try {
+      // Get all people data from files (current in-memory data)
+      const peopleData = this.getAllPeople();
+
+      if (peopleData.length === 0) {
+        console.log('⚠️  No people data available to migrate');
+        return {
+          total: 0,
+          successful: 0,
+          failed: 0,
+          errors: [],
+          skipped: 0
+        };
+      }
+
+      console.log(`📊 Found ${peopleData.length} people to migrate from files`);
+
+      // Use repository to perform migration
+      const results = await this.repository.migrateFromFiles(peopleData, 'system');
+
+      // Mark migration as completed if successful
+      if (results.successful > 0) {
+        this.databaseMigrated = true;
+        console.log('✅ Database migration completed successfully');
+      }
+
+      return results;
+    } catch (error) {
+      console.error('❌ Migration from files failed:', error);
+      throw new Error(`Migration failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Perform database migration if needed
+   * This method checks if migration is needed and performs it automatically
+   * @returns {Promise<void>}
+   */
+  async performDatabaseMigration() {
+    try {
+      // Check if migration has already been completed
+      const migrated = await this.isDatabaseMigrated();
+      
+      if (migrated) {
+        console.log('✅ Database migration already completed');
+        this.databaseMigrated = true;
+        return;
+      }
+
+      console.log('🔄 Database migration needed - starting migration process...');
+
+      // Perform migration
+      const results = await this.migrateFromFiles();
+
+      if (results.successful > 0) {
+        console.log(`✅ Migration completed: ${results.successful}/${results.total} people migrated successfully`);
+        this.databaseMigrated = true;
+      } else if (results.total === 0) {
+        console.log('ℹ️  No people data available to migrate');
+        this.databaseMigrated = true; // Mark as migrated to prevent retry
+      } else {
+        console.warn(`⚠️  Migration completed with issues: ${results.failed}/${results.total} failed`);
+        this.databaseMigrated = false;
+      }
+    } catch (error) {
+      console.error('❌ Database migration failed:', error);
+      this.databaseMigrated = false;
+      // Don't throw error to allow service to continue with file-based data
+    }
+  }
+
+  /**
+   * Get person content from database
+   * @param {string} slug - Person's slug
+   * @returns {Promise<Object|null>} Person data from database or null if not found
+   */
+  async getPersonFromDatabase(slug) {
+    try {
+      const dbContent = await this.repository.findBySlug(slug);
+      
+      if (!dbContent) {
+        return null;
+      }
+
+      // Get file-based data for images and metadata
+      const filePerson = this.getPersonBySlug(slug);
+      
+      if (!filePerson) {
+        // If no file data, create minimal person object with database content
+        return {
+          id: slug,
+          name: dbContent.personName,
+          slug: dbContent.personSlug,
+          content: {
+            html: this.processTextToHtml(dbContent.content),
+            text: dbContent.content,
+            lastUpdated: dbContent.updatedAt,
+            updatedBy: dbContent.updatedBy,
+            source: 'database'
+          },
+          images: [],
+          metadata: {
+            lastModified: new Date(dbContent.updatedAt),
+            wordCount: dbContent.content.split(' ').filter(word => word.length > 0).length,
+            imageCount: 0,
+            hasContent: true,
+            contentLength: dbContent.content.length,
+            source: 'database'
+          }
+        };
+      }
+
+      // Merge database content with file-based images and metadata
+      return {
+        ...filePerson,
+        content: {
+          html: this.processTextToHtml(dbContent.content),
+          text: dbContent.content,
+          lastUpdated: dbContent.updatedAt,
+          updatedBy: dbContent.updatedBy,
+          source: 'database'
+        },
+        metadata: {
+          ...filePerson.metadata,
+          lastModified: new Date(dbContent.updatedAt),
+          wordCount: dbContent.content.split(' ').filter(word => word.length > 0).length,
+          contentLength: dbContent.content.length,
+          source: 'database'
+        }
+      };
+    } catch (error) {
+      console.error(`Error getting person from database (${slug}):`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Process plain text content to HTML format
+   * @param {string} text - Plain text content
+   * @returns {string} HTML formatted content
+   */
+  processTextToHtml(text) {
+    if (!text) return '';
+
+    // Simple text to HTML conversion
+    // Split by double newlines for paragraphs
+    const paragraphs = text.split(/\n\s*\n/);
+    
+    return paragraphs
+      .map(paragraph => {
+        const trimmed = paragraph.trim();
+        if (trimmed.length === 0) return '';
+        
+        // Replace single newlines with <br> tags within paragraphs
+        const withBreaks = trimmed.replace(/\n/g, '<br>');
+        
+        return `<p>${withBreaks}</p>`;
+      })
+      .filter(p => p.length > 0)
+      .join('\n');
   }
 }
 

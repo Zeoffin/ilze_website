@@ -94,7 +94,7 @@ router.get('/people', ensurePeopleInitialized, async (req, res) => {
   const startTime = Date.now();
   
   try {
-    // Get all people for grid display
+    // Get all people for grid display with database content prioritized
     const people = peopleRepository.getAllForGrid();
     const stats = peopleRepository.getStats();
     
@@ -108,11 +108,12 @@ router.get('/people', ensurePeopleInitialized, async (req, res) => {
         stats: stats,
         duration: `${duration}ms`,
         timestamp: new Date().toISOString(),
-        requestId: req.id
+        requestId: req.id,
+        contentSource: 'database-prioritized'
       }
     });
     
-    console.log(`Served ${people.length} people in ${duration}ms`);
+    console.log(`Served ${people.length} people with database content in ${duration}ms`);
     
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -143,8 +144,8 @@ router.get('/people/:slug', ensurePeopleInitialized, validatePersonSlug, async (
   try {
     const { slug } = req.params;
     
-    // Get person data from repository
-    const personData = peopleRepository.getForProfile(slug);
+    // Get person data from repository with database content prioritized
+    const personData = await peopleRepository.getForProfileWithDatabase(slug);
     
     if (!personData) {
       return res.status(404).json({

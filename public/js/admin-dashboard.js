@@ -412,8 +412,12 @@ class AdminDashboard {
     }
     
     handleSectionEdit(section) {
-        // Navigate to content editor for the specific section
-        window.location.href = `/admin/editor?section=${section}`;
+        // Navigate to appropriate interface for the specific section
+        if (section === 'people') {
+            window.location.href = '/admin/people';
+        } else {
+            window.location.href = `/admin/editor?section=${section}`;
+        }
     }
     
     async handleRefreshData() {

@@ -5,12 +5,15 @@ const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const AdminUser = require('../models/AdminUser');
 const { requireAuth, requireGuest, addAuthStatus, csrfProtection } = require('../middleware/auth');
+const peopleController = require('../controllers/peopleController');
 const { upload, handleUploadError } = require('../middleware/upload');
 const { 
   validateAdminLogin, 
   validateContent, 
   validateFileUpload, 
   validateFilename,
+  validatePersonSlug,
+  validatePeopleContent,
   sanitizeInputs 
 } = require('../middleware/validation');
 const router = express.Router();
@@ -54,6 +57,7 @@ router.use('/dashboard*', requireAuth, csrfProtection);
 router.use('/content*', requireAuth, csrfProtection);
 router.use('/upload*', requireAuth, csrfProtection);
 router.use('/image*', requireAuth, csrfProtection);
+router.use('/api/people*', requireAuth, csrfProtection);
 router.use('/logout', requireAuth, csrfProtection);
 
 /**
@@ -629,6 +633,188 @@ router.post('/image/move-to-media/:filename', validateFilename, async (req, res)
     res.status(500).json({
       error: 'Internal server error',
       message: error.message
+    });
+  }
+});
+
+/**
+ * GET /admin/api/people
+ * Get all people for admin management interface
+ */
+router.get('/api/people', peopleController.getAllPeople);
+
+/**
+ * GET /admin/api/people/:slug
+ * Get specific person content for editing
+ */
+router.get('/api/people/:slug', validatePersonSlug, peopleController.getPerson);
+
+/**
+ * PUT /admin/api/people/:slug
+ * Update person content
+ */
+router.put('/api/people/:slug', validatePersonSlug, validatePeopleContent, peopleController.updatePerson);
+
+/**
+ * GET /admin/people
+ * Serve people management interface
+ */
+router.get('/people', requireAuth, async (req, res) => {
+  try {
+    // Check if this is an API request (has explicit JSON accept header or is AJAX)
+    const isApiRequest = req.xhr || 
+                        req.headers.accept?.includes('application/json') && 
+                        !req.headers.accept?.includes('text/html');
+    
+    if (isApiRequest) {
+      // Return JSON for API requests
+      return res.json({
+        success: true,
+        message: 'People management interface',
+        user: {
+          username: req.session.username
+        }
+      });
+    }
+    
+    // Serve HTML page for browser requests
+    return res.sendFile(path.join(__dirname, '../../public/admin-people.html'));
+    
+  } catch (error) {
+    console.error('Error serving people management interface:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to load people management interface',
+      timestamp: new Date().toISOString(),
+      requestId: req.id
+    });
+  }
+});
+
+/**
+ * GET /admin/people/:slug/edit
+ * Serve content editor page for specific person
+ */
+router.get('/people/:slug/edit', requireAuth, validatePersonSlug, async (req, res) => {
+  try {
+    const { slug } = req.params;
+    
+
+    // Validate that the person exists before serving the editor
+    const peopleDataService = require('../services/PeopleDataService');
+    const PeopleContentRepository = require('../models/PeopleContentRepository');
+    
+    // Initialize services if needed
+    if (!peopleDataService.initialized) {
+      await peopleDataService.initialize();
+    }
+    
+    const repository = new PeopleContentRepository();
+    
+    // Try to initialize repository with error handling
+    let repositoryAvailable = false;
+    try {
+      await repository.initialize();
+      repositoryAvailable = true;
+    } catch (dbError) {
+      console.error('Database unavailable for people editor:', {
+        error: dbError.message,
+        slug: slug,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Continue with file-based validation only
+      repositoryAvailable = false;
+    }
+    
+    // Check if person exists in database or files
+    let personExists = false;
+    
+    // Check database first (if available)
+    if (repositoryAvailable) {
+      try {
+        const dbPerson = await repository.findBySlug(slug);
+        if (dbPerson) {
+          personExists = true;
+        }
+      } catch (dbError) {
+        console.error('Database error while checking person existence:', {
+          error: dbError.message,
+          slug: slug,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    // Check file system if not found in database or database unavailable
+    if (!personExists) {
+      const filePerson = peopleDataService.getPersonBySlug(slug);
+      if (filePerson) {
+        personExists = true;
+      }
+    }
+    
+    if (!personExists) {
+      // Return 404 for invalid slugs
+      if (req.accepts('html') && !req.accepts('json')) {
+        return res.status(404).sendFile(path.join(__dirname, '../../public/admin-dashboard.html'));
+      }
+      
+      return res.status(404).json({
+        success: false,
+        error: 'Person not found',
+        message: 'The requested person profile does not exist',
+        timestamp: new Date().toISOString(),
+        requestId: req.id
+      });
+    }
+    
+    // Check if this is an API request (has /api/ in the path or explicit JSON accept header)
+    const isApiRequest = req.path.includes('/api/') || 
+                        (req.get('Accept') && req.get('Accept').includes('application/json') && !req.get('Accept').includes('text/html'));
+    
+    if (isApiRequest) {
+      // Return JSON for API requests
+      return res.json({
+        success: true,
+        message: 'People content editor interface',
+        slug: slug,
+        user: {
+          username: req.session.username
+        }
+      });
+    }
+    
+    // Log admin access
+    console.log('Admin people editor access:', {
+      user: req.session.username || req.session.admin?.username || 'unknown',
+      slug: slug,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+    
+    // Serve HTML interface for browser requests
+    return res.sendFile(path.join(__dirname, '../../public/admin-people-editor.html'));
+    
+  } catch (error) {
+    console.error('Error serving people editor interface:', {
+      error: error.message,
+      slug: req.params.slug,
+      stack: error.stack,
+      requestId: req.id
+    });
+    
+    if (req.accepts('html') && !req.accepts('json')) {
+      return res.status(500).sendFile(path.join(__dirname, '../../public/admin-dashboard.html'));
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to load people editor interface',
+      timestamp: new Date().toISOString(),
+      requestId: req.id
     });
   }
 });

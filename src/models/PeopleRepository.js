@@ -25,8 +25,8 @@ class PeopleRepository {
         await this.peopleDataService.initialize();
       }
 
-      // Load all people from the data service
-      const peopleData = this.peopleDataService.getAllPeople();
+      // Load all people from the data service with database content prioritized
+      const peopleData = await this.peopleDataService.getAllPeopleWithDatabase();
       
       // Convert to Person instances and store in repository
       this.people.clear();
@@ -41,7 +41,7 @@ class PeopleRepository {
       }
 
       this.initialized = true;
-      console.log(`PeopleRepository initialized with ${this.people.size} people`);
+      console.log(`PeopleRepository initialized with ${this.people.size} people (database content prioritized)`);
     } catch (error) {
       console.error('Failed to initialize PeopleRepository:', error);
       throw error;
@@ -216,6 +216,35 @@ class PeopleRepository {
   }
 
   /**
+   * Get person for profile display with database content prioritized
+   * @param {string} slug - Person's slug
+   * @returns {Promise<Object|null>} Detailed person object with database content or null if not found
+   */
+  async getForProfileWithDatabase(slug) {
+    try {
+      const person = this.getBySlug(slug);
+      if (!person) {
+        return null;
+      }
+
+      // Try to merge with database content
+      try {
+        await person.mergeWithDatabase();
+        console.log(`✅ Successfully merged ${person.name} with database content`);
+      } catch (dbError) {
+        console.warn(`⚠️  Could not merge ${person.name} with database content, using file content:`, dbError.message);
+        // Continue with file-based content - this is not a fatal error
+      }
+      
+      return person.toProfileJSON();
+    } catch (error) {
+      console.error(`Error getting person profile with database content for slug '${slug}':`, error);
+      // Fallback to regular profile data
+      return this.getForProfile(slug);
+    }
+  }
+
+  /**
    * Validate all people in repository
    * @returns {Object} Validation results with errors by person slug
    */
@@ -250,13 +279,15 @@ class PeopleRepository {
     console.log('Refreshing PeopleRepository...');
     
     // Refresh the underlying data service
-    await this.peopleDataService.refresh();
+    if (this.peopleDataService.refresh) {
+      await this.peopleDataService.refresh();
+    }
     
-    // Reinitialize the repository
+    // Reinitialize the repository with database content
     this.initialized = false;
     await this.initialize();
     
-    console.log(`PeopleRepository refreshed with ${this.people.size} people`);
+    console.log(`PeopleRepository refreshed with ${this.people.size} people (database content prioritized)`);
   }
 
   /**

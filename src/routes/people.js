@@ -72,7 +72,7 @@ router.get('/:slug', ensurePeopleInitialized, validatePersonSlug, async (req, re
   try {
     const { slug } = req.params;
     
-    // Get person data from repository
+    // Get person data from repository with database content prioritized
     const person = peopleRepository.getBySlug(slug);
     
     if (!person) {
@@ -110,25 +110,27 @@ router.get('/:slug', ensurePeopleInitialized, validatePersonSlug, async (req, re
                          req.path.startsWith('/api/');
     
     if (isApiRequest) {
-      // For API requests, return JSON data
+      // For API requests, return JSON data with database content
+      const profileData = await peopleRepository.getForProfileWithDatabase(slug);
       res.json({
         success: true,
-        person: person.toProfileJSON(),
+        person: profileData,
         meta: {
           duration: `${duration}ms`,
           timestamp: new Date().toISOString(),
-          requestId: req.id
+          requestId: req.id,
+          contentSource: 'database-prioritized'
         }
       });
     } else {
-      // For browser requests, serve the profile page
-      const profileData = person.toProfileJSON();
+      // For browser requests, serve the profile page with database content
+      const profileData = await peopleRepository.getForProfileWithDatabase(slug);
       const html = generateProfilePageHTML(profileData);
       
       res.set('Content-Type', 'text/html; charset=utf-8');
       res.send(html);
       
-      console.log(`Served profile page for ${person.name} in ${duration}ms`);
+      console.log(`Served profile page for ${person.name} with database content in ${duration}ms`);
     }
     
   } catch (error) {
